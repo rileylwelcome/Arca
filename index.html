@@ -1,0 +1,1589 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arca</title>
+<meta name="description" content="Arca prototype: spending envelopes, commitment mode and gentle friction. Fictional data; no real cards or money.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon-64.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Arca">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1B2F55">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one phone-sized app column, centered on larger screens; content scrolls inside, tab bar fixed at the bottom of the device. */
+:root {
+  --page: #E6E2D9;
+  --bg: #F5F2EC;
+  --surface: #FFFDF9;
+  --surface-2: #EDE9E1;
+  --ink: #15243D;
+  --ink-2: #4C5A6F;
+  --ink-3: #7A8596;
+  --line: #E1DCD2;
+  --primary: #1C3157;
+  --on-primary: #F5F2EC;
+  --teal: #4A8984;
+  --teal-ink: #2D6662;
+  --teal-soft: #DCEAE6;
+  --pending: #9DBDB8;
+  --ok: #3C7F62;
+  --warn: #9A6A2A;
+  --warn-soft: #F3E8D6;
+  --stop: #94503F;
+  --stop-soft: #F2E2DC;
+  --hero-a: #1B2F55;
+  --hero-b: #2C5872;
+  --hero-c: #6A9C94;
+  --hill-1: #8DB6AC;
+  --hill-2: #4E837E;
+  --hill-3: #2B5464;
+  --on-hero: #F7F4EE;
+  --m1: #2C5872; --m2: #4A8984; --m3: #7C6A9A; --m4: #A0714A;
+  --shadow: 0 1px 2px rgba(21, 36, 61, .05), 0 10px 30px rgba(21, 36, 61, .08);
+  --display: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+  --body: 'Figtree', -apple-system, 'Segoe UI', system-ui, sans-serif;
+  --r-lg: 26px; --r-md: 18px; --r-sm: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #080E19; --bg: #0F1828; --surface: #162238; --surface-2: #1D2B44; --ink: #ECEFF3; --ink-2: #AEB8C7; --ink-3: #7F8BA0; --line: #26354F;
+    --primary: #8CC3BC; --on-primary: #0F1828; --teal: #7DB9B2; --teal-ink: #9CD0C9; --teal-soft: #1C3A3C; --pending: #3F6B68;
+    --ok: #79C2A0; --warn: #D9A65E; --warn-soft: #3A2F1E; --stop: #E0917F; --stop-soft: #3C2420;
+    --hero-a: #0B1630; --hero-b: #173A52; --hero-c: #2F6463; --hill-1: #3B6C68; --hill-2: #24504F; --hill-3: #142F3E; --on-hero: #EEF1F2;
+    --m1: #6E9BC0; --m2: #7DB9B2; --m3: #A99BCB; --m4: #D2A37A;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #080E19; --bg: #0F1828; --surface: #162238; --surface-2: #1D2B44; --ink: #ECEFF3; --ink-2: #AEB8C7; --ink-3: #7F8BA0; --line: #26354F;
+  --primary: #8CC3BC; --on-primary: #0F1828; --teal: #7DB9B2; --teal-ink: #9CD0C9; --teal-soft: #1C3A3C; --pending: #3F6B68;
+  --ok: #79C2A0; --warn: #D9A65E; --warn-soft: #3A2F1E; --stop: #E0917F; --stop-soft: #3C2420;
+  --hero-a: #0B1630; --hero-b: #173A52; --hero-c: #2F6463; --hill-1: #3B6C68; --hill-2: #24504F; --hill-3: #142F3E; --on-hero: #EEF1F2;
+  --m1: #6E9BC0; --m2: #7DB9B2; --m3: #A99BCB; --m4: #D2A37A;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.25);
+  color-scheme: dark;
+}
+
+html, body { height: 100%; }
+[hidden] { display: none !important; }
+img { max-width: 100%; }
+body {
+  margin: 0; -webkit-text-size-adjust: 100%;
+  background: var(--page); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.45;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  padding-inline: 16px; padding-block: 16px; box-sizing: border-box; -webkit-font-smoothing: antialiased;
+}
+*, *::before, *::after { box-sizing: border-box; }
+#root { width: min(100%, 410px); height: min(100%, 860px); }
+.caption-out { color: var(--ink-3); font-size: 12px; letter-spacing: .02em; text-align: center; }
+@media (max-width: 520px) {
+  body { padding-inline: 0; padding-block: 0; gap: 0; }
+  #root { width: 100%; height: 100%; }
+  .caption-out { display: none; }
+  .device { border-radius: 0 !important; box-shadow: none !important; }
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+h1, h2, h3, p { margin: 0; }
+.num, .tnum { font-variant-numeric: tabular-nums; }
+
+.device { position: relative; height: 100%; background: var(--bg); border-radius: 36px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 30px 80px rgba(10, 20, 40, .22), 0 0 0 1px var(--line); }
+/* Behind the iPhone status bar when installed to the Home Screen; zero height elsewhere. */
+.statusbar { flex: none; height: env(safe-area-inset-top, 0px); background: var(--hero-a); }
+/* iOS zooms into inputs smaller than 16px; keep them at 16px or larger. */
+.input, select.input, textarea.input { font-size: 16px; }
+.screen { flex: 1; overflow-y: auto; overflow-x: hidden; scroll-behavior: smooth; }
+.pad { padding: 20px 20px 28px; display: flex; flex-direction: column; gap: 18px; }
+.screen-in { animation: rise .45s ease both; }
+@keyframes rise { from { opacity: .75; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* Tab bar */
+.tabbar { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--surface); border-top: 1px solid var(--line); padding: 6px 8px calc(8px + env(safe-area-inset-bottom, 0px)); }
+.tab { background: none; border: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0; color: var(--ink-3); font-size: 11.5px; font-weight: 600; letter-spacing: .02em; border-radius: 12px; }
+.tab svg { width: 22px; height: 22px; }
+.tab[aria-current="page"] { color: var(--teal-ink); }
+.tab[aria-current="page"] .tab-dot { opacity: 1; }
+.tab-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: 0; }
+
+/* Type */
+.display { font-family: var(--display); font-weight: 400; font-size: 30px; line-height: 1.12; letter-spacing: -.01em; text-wrap: balance; }
+.title { font-family: var(--display); font-weight: 500; font-size: 26px; line-height: 1.15; text-wrap: balance; }
+.h3 { font-weight: 650; font-size: 16px; }
+.eyebrow { font-size: 11.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); }
+.muted { color: var(--ink-2); }
+.small { font-size: 13px; }
+.tiny { font-size: 12px; color: var(--ink-3); }
+
+/* Hero */
+.hero { position: relative; color: var(--on-hero); background: linear-gradient(170deg, var(--hero-a) 0%, var(--hero-b) 55%, var(--hero-c) 100%); padding: 26px 22px 92px; overflow: hidden; }
+.hero .eyebrow { color: color-mix(in srgb, var(--on-hero) 70%, transparent); }
+.hero-glow { position: absolute; inset: -40% -20% auto auto; width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 236, 200, .35), transparent 65%); animation: breathe 9s ease-in-out infinite; }
+@keyframes breathe { 0%, 100% { transform: scale(1); opacity: .8; } 50% { transform: scale(1.12); opacity: 1; } }
+.hero svg.hills { position: absolute; left: 0; right: 0; bottom: -1px; width: 100%; height: 110px; }
+.hero-inner { position: relative; display: flex; flex-direction: column; gap: 6px; }
+.hero-label { margin-top: 18px; font-size: 13.5px; opacity: .85; }
+.hero-num { font-family: var(--display); font-size: 54px; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.hero-sub { font-size: 13.5px; opacity: .8; }
+.hero-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.glass { background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .2); color: var(--on-hero); border-radius: 999px; padding: 6px 12px; font-size: 13px; backdrop-filter: blur(6px); }
+.glass b { font-weight: 650; font-variant-numeric: tabular-nums; margin-left: 4px; }
+.lift { margin-top: -64px; position: relative; }
+
+/* Cards */
+.card { background: var(--surface); border-radius: var(--r-lg); padding: 20px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px; }
+.card.flat { box-shadow: none; border: 1px solid var(--line); }
+.card.soft { background: var(--teal-soft); box-shadow: none; }
+.card.warnc { background: var(--warn-soft); box-shadow: none; }
+.row { display: flex; align-items: center; gap: 12px; }
+.row.between { justify-content: space-between; }
+.row.wrap { flex-wrap: wrap; }
+.grow { flex: 1; min-width: 0; }
+.stack { display: flex; flex-direction: column; gap: 8px; }
+.stack-lg { display: flex; flex-direction: column; gap: 14px; }
+
+.avatar { width: 40px; height: 40px; flex: none; border-radius: 14px; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 16px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 600; background: var(--surface-2); color: var(--ink-2); white-space: nowrap; }
+.chip.teal { background: var(--teal-soft); color: var(--teal-ink); }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.chip.stop { background: var(--stop-soft); color: var(--stop); }
+.chip.demo { background: var(--warn-soft); color: var(--warn); letter-spacing: .04em; text-transform: uppercase; font-size: 10.5px; }
+
+.bar { position: relative; height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; display: flex; }
+.bar span { height: 100%; transition: width .6s ease; }
+.bar .c { background: var(--teal); }
+.bar .p { background: repeating-linear-gradient(-45deg, var(--pending), var(--pending) 4px, color-mix(in srgb, var(--pending) 55%, transparent) 4px, color-mix(in srgb, var(--pending) 55%, transparent) 8px); }
+.bar .o { background: var(--warn); }
+.bar .mark { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ink); opacity: .55; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+
+.big-num { font-family: var(--display); font-size: 34px; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stat { background: var(--surface-2); border-radius: var(--r-sm); padding: 12px; display: flex; flex-direction: column; gap: 2px; }
+.stat b { font-size: 18px; font-variant-numeric: tabular-nums; font-weight: 650; }
+.stat span { font-size: 12px; color: var(--ink-2); }
+
+/* Buttons */
+.btn { border: 0; border-radius: 999px; padding: 13px 18px; font-weight: 650; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform .15s ease, opacity .15s; }
+.btn:active { transform: scale(.98); }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.btn.primary { background: var(--primary); color: var(--on-primary); }
+.btn.secondary { background: var(--surface-2); color: var(--ink); }
+.btn.ghost { background: transparent; color: var(--teal-ink); padding: 10px 12px; }
+.btn.danger { background: transparent; color: var(--stop); }
+.btn.block { width: 100%; }
+.btn.sm { padding: 8px 13px; font-size: 13.5px; }
+.link { background: none; border: 0; padding: 0; color: var(--teal-ink); font-weight: 600; font-size: 13.5px; }
+
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.tile { text-align: left; background: var(--surface); border: 0; border-radius: var(--r-md); padding: 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; min-height: 108px; }
+.tile .ic { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; background: var(--teal-soft); color: var(--teal-ink); }
+.tile .ic svg { width: 19px; height: 19px; }
+.tile b { font-size: 15px; font-weight: 650; }
+.tile small { color: var(--ink-3); font-size: 12.5px; }
+
+/* Lists */
+.list { display: flex; flex-direction: column; }
+.li { display: flex; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.li:first-child { border-top: 0; }
+.li .amt { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.li .sub { font-size: 12.5px; color: var(--ink-3); }
+.strike { text-decoration: line-through; color: var(--ink-3); }
+
+/* Forms */
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > span { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.field small { color: var(--ink-3); font-size: 12.5px; }
+.input, .money, select.input, textarea.input { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; width: 100%; }
+.money { display: flex; align-items: center; gap: 4px; }
+.money span { color: var(--ink-3); font-weight: 600; }
+.money input { border: 0; background: none; outline: none; width: 100%; font-size: 20px; font-variant-numeric: tabular-nums; }
+.money:focus-within, .input:focus { border-color: var(--teal); outline: none; }
+textarea.input { min-height: 96px; resize: vertical; }
+.seg { display: flex; background: var(--surface-2); border-radius: 14px; padding: 4px; gap: 4px; }
+.seg button { flex: 1; border: 0; background: transparent; border-radius: 10px; padding: 9px 6px; font-weight: 600; font-size: 13.5px; color: var(--ink-2); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 14px; font-size: 14px; font-weight: 550; }
+.pill[aria-pressed="true"] { background: var(--teal-soft); border-color: var(--teal); color: var(--teal-ink); }
+.choice { text-align: left; border: 1.5px solid var(--line); background: var(--surface); border-radius: var(--r-md); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.choice[aria-pressed="true"] { border-color: var(--teal); background: color-mix(in srgb, var(--teal-soft) 60%, var(--surface)); }
+.choice b { font-size: 15px; }
+.choice span { font-size: 13px; color: var(--ink-2); }
+.toggle { display: flex; align-items: center; gap: 12px; background: none; border: 0; padding: 0; text-align: left; width: 100%; }
+.switch { width: 46px; height: 28px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); position: relative; flex: none; transition: background .2s; }
+.switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .2s; }
+.toggle[aria-checked="true"] .switch { background: var(--teal); border-color: var(--teal); }
+.toggle[aria-checked="true"] .switch::after { transform: translateX(18px); }
+.note { font-size: 13px; color: var(--ink-2); background: var(--surface-2); border-radius: var(--r-sm); padding: 10px 12px; }
+.note.warn { background: var(--warn-soft); color: var(--warn); }
+
+/* Sheets */
+.sheet-wrap { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; justify-content: flex-end; }
+.scrim { position: absolute; inset: 0; background: rgba(8, 16, 30, .42); animation: fade .25s ease both; }
+.sheet { position: relative; background: var(--bg); border-radius: 28px 28px 0 0; max-height: 93%; display: flex; flex-direction: column; animation: slide .32s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes fade { from { opacity: 0; } }
+@keyframes slide { from { transform: translateY(40px); opacity: .3; } }
+.sheet-head { display: flex; align-items: center; gap: 10px; padding: 18px 18px 8px 22px; position: relative; }
+.sheet-head h2 { font-family: var(--display); font-weight: 500; font-size: 22px; flex: 1; text-wrap: balance; }
+.grabber { position: absolute; top: 7px; left: 50%; width: 38px; height: 4px; margin-left: -19px; border-radius: 4px; background: var(--line); }
+.icon-btn { width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--surface-2); color: var(--ink-2); font-size: 18px; line-height: 1; flex: none; }
+.sheet-body { overflow-y: auto; padding: 8px 22px 22px; display: flex; flex-direction: column; gap: 16px; }
+.sheet-foot { padding: 12px 22px calc(16px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; background: var(--bg); }
+
+.toast { position: absolute; left: 16px; right: 16px; bottom: 86px; z-index: 40; background: var(--ink); color: var(--bg); padding: 12px 16px; border-radius: 16px; font-size: 14px; box-shadow: var(--shadow); animation: slide .3s ease both; }
+
+/* Demo card */
+.vcard { position: relative; aspect-ratio: 1.586; max-width: 100%; border-radius: 20px; padding: 18px; color: #F6F4EF; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; background: linear-gradient(135deg, #1B2F55, #2C5872 60%, #4A8984); box-shadow: 0 14px 30px rgba(20, 40, 70, .25); }
+.vcard.single { background: linear-gradient(135deg, #3A3358, #5B5A86 60%, #8A8FB0); }
+.vcard.dim { filter: grayscale(.7); opacity: .7; }
+.vcard .ribbon { position: absolute; top: 14px; right: -44px; transform: rotate(35deg); background: #F2D9A8; color: #3A2A10; font-size: 10px; font-weight: 800; letter-spacing: .08em; padding: 4px 48px; }
+.vcard .pan { font-variant-numeric: tabular-nums; font-size: 17px; letter-spacing: .12em; }
+.vcard .wave { position: absolute; right: -30px; bottom: -40px; width: 200px; height: 200px; border-radius: 50%; border: 1px solid rgba(255,255,255,.18); box-shadow: 0 0 0 22px rgba(255,255,255,.04), 0 0 0 44px rgba(255,255,255,.03); }
+.vcard small { font-size: 11px; opacity: .75; letter-spacing: .06em; text-transform: uppercase; }
+
+/* Shield mock */
+.shield { border-radius: 30px; padding: 30px 22px 22px; background: linear-gradient(180deg, #24406A, #1A2D4E); color: #F2F4F7; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+.shield .sicon { width: 64px; height: 64px; border-radius: 18px; background: rgba(255,255,255,.12); display: grid; place-items: center; }
+.shield h3 { font-size: 20px; font-weight: 650; }
+.shield p { font-size: 14px; opacity: .85; }
+.shield .sbtn { width: 100%; border: 0; border-radius: 14px; padding: 13px; font-weight: 650; }
+.shield .sbtn.p { background: #8CC3BC; color: #10233A; margin-top: 8px; }
+.shield .sbtn.s { background: transparent; color: #CFE2DF; }
+
+/* Onboarding */
+.onb { height: 100%; display: flex; flex-direction: column; background: var(--bg); }
+.onb-top { padding: 18px 22px 0; display: flex; align-items: center; gap: 10px; }
+.dots { display: flex; gap: 6px; flex: 1; }
+.dots i { height: 4px; flex: 1; border-radius: 4px; background: var(--line); }
+.dots i.on { background: var(--teal); }
+.onb-body { flex: 1; overflow-y: auto; padding: 22px; display: flex; flex-direction: column; gap: 18px; animation: rise .4s ease both; }
+.onb-foot { padding: 14px 22px calc(18px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 10px; }
+.onb-hero { border-radius: var(--r-lg); overflow: hidden; position: relative; height: 200px; background: linear-gradient(170deg, var(--hero-a), var(--hero-b) 60%, var(--hero-c)); }
+.onb-hero svg { position: absolute; bottom: -1px; left: 0; width: 100%; height: 120px; }
+
+.test-row { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; padding: 8px 0; border-top: 1px solid var(--line); }
+.test-row:first-child { border-top: 0; }
+.dotok { width: 18px; height: 18px; border-radius: 50%; flex: none; display: grid; place-items: center; font-size: 11px; font-weight: 800; color: #fff; margin-top: 1px; }
+
+.mile { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--line); }
+.mile:first-child { border-top: 0; }
+.mile .m { width: 30px; height: 30px; flex: none; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--line); color: var(--ink-3); }
+.mile.done .m { background: var(--teal-soft); border-color: var(--teal); color: var(--teal-ink); }
+
+details.fold summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--teal-ink); list-style: none; }
+details.fold summary::-webkit-details-marker { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+</style>
+</head>
+<body>
+<p class="caption-out">Arca · interactive prototype · fictional data, no real cards or money</p>
+<div id="root"><p style="padding:24px;color:var(--ink-2)">Loading the Arca prototype…</p></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="engine.js"></script>
+<script type="text/babel" data-presets="react">
+const E = window.ArcaEngine;
+const { useState, useEffect, useRef, useCallback } = React;
+const STORE_KEY = 'pause-demo-state';
+const TAB_KEY = 'pause-demo-tab';
+
+/* ---------- persistence (per-browser; safe to fail) ---------- */
+function loadState() {
+  try { const raw = localStorage.getItem(STORE_KEY); if (raw) { const s = JSON.parse(raw); if (s && s.version === E.STATE_VERSION) return s; } } catch (e) {}
+  return null;
+}
+function saveState(s) { try { localStorage.setItem(STORE_KEY, JSON.stringify(s)); } catch (e) {} }
+
+/* ---------- formatting ---------- */
+const $ = (c, short) => E.formatCents(c, { short });
+const centsToInput = c => (c === null || c === undefined) ? '' : Math.floor(c / 100) + '.' + String(c % 100).padStart(2, '0');
+const fmtDay = t => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+const fmtLong = t => new Date(t).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+const fmtWhen = t => new Date(t).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+const fmtTime = t => new Date(t).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+function relDay(t, now) {
+  const d = Math.round((E.startOfDay(t) - E.startOfDay(now)) / E.DAY);
+  if (d === 0) return 'today'; if (d === -1) return 'yesterday'; if (d === 1) return 'tomorrow';
+  if (d < 0 && d > -7) return (-d) + ' days ago';
+  return fmtDay(t);
+}
+
+const MODE = {
+  reminder: { label: 'Gentle reminder', short: 'Reminder', desc: 'Arca reminds you of your budget when you log or try a purchase. Nothing is blocked.' },
+  access: { label: 'Shopping access restriction', short: 'Shop shield', desc: 'Screen Time covers the shopping app or site with a pause screen. You can wait, or open it for 10 minutes. Payments still go through.' },
+  payment: { label: 'Payment restriction', short: 'Card limit', desc: 'Your envelope card declines purchases at other merchants or above what’s left. Needs a card program partner (Phase 2), so it’s simulated here.' }
+};
+const FIELD_LABEL = { budget: 'Budget', mode: 'Restriction', commitment: 'Commitment mode', cooling: 'Cooling-off', active: 'Envelope' };
+function describeChange(c, s) {
+  if (c.field === 'budget') return `Budget rises to ${$(c.value)}`;
+  if (c.field === 'mode') return `Restriction changes to ${MODE[c.value].label.toLowerCase()}`;
+  if (c.field === 'commitment') return c.value ? 'Commitment mode turns on' : 'Commitment mode turns off';
+  if (c.field === 'cooling') return `Cooling-off shortens to ${c.value} hours`;
+  if (c.field === 'active') return 'Envelope closes';
+  return 'Change';
+}
+const DECLINE_COPY = {
+  over_allowance: (r, m) => `This would go past what’s left in your ${m} envelope. You have ${$(r.availableCents)} available, so the payment was declined.`,
+  wrong_merchant: (r, m, other) => `This card only works at ${m}. ${other} isn’t part of this envelope, so the payment was declined.`,
+  card_used: (r, m) => `This single-use card already paid for something at ${m}. Single-use cards close after one approved purchase.`,
+  card_inactive: () => 'This card isn’t active.',
+  envelope_closed: (r, m) => `The ${m} envelope is closed, so its card no longer approves purchases.`
+};
+const REFLECT_PROMPTS = ['What was going on when you wanted it?', 'How will you feel about this tomorrow?', 'What would you rather this money do?', 'What helped you decide?'];
+
+/* ---------- small pieces ---------- */
+const Icon = ({ name }) => {
+  const p = {
+    home: <path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z" />,
+    env: <><rect x="3.5" y="6" width="17" height="12.5" rx="2.5" /><path d="m4 7.5 8 5.5 8-5.5" /></>,
+    progress: <><path d="M4 19.5h16" /><path d="M7 16v-4M12 16V8M17 16v-6" /></>,
+    gear: <><circle cx="12" cy="12" r="3" /><path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M18 6l-1.6 1.6M7.6 16.4 6 18M18 18l-1.6-1.6M7.6 7.6 6 6" /></>,
+    card: <><rect x="3" y="6" width="18" height="12.5" rx="2.5" /><path d="M3 10h18M7 15h4" /></>,
+    pen: <path d="M5 19h3.5L19 8.5 15.5 5 5 15.5zM13.5 7l3.5 3.5" />,
+    heart: <path d="M12 19s-7-4.4-7-9.5A3.8 3.8 0 0 1 12 7a3.8 3.8 0 0 1 7 2.5C19 14.6 12 19 12 19z" />,
+    leaf: <path d="M5 19c0-8 5-13 14-13 0 9-5 13-11 13M5 19l7-7" />,
+    shield: <path d="M12 3.5 5 6.5v5c0 4.3 3 7.6 7 9 4-1.4 7-4.7 7-9v-5z" />,
+    check: <path d="m6 12.5 4 4 8-9" />,
+    clock: <><circle cx="12" cy="12" r="8" /><path d="M12 7.5V12l3 2" /></>,
+    plus: <path d="M12 5v14M5 12h14" />
+  }[name];
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{p}</svg>;
+};
+
+function Hills() {
+  return (
+    <svg className="hills" viewBox="0 0 400 110" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 60 C60 30 120 40 180 55 S300 35 400 50 V110 H0Z" fill="var(--hill-1)" opacity=".55" />
+      <path d="M0 78 C70 55 140 70 210 76 S330 58 400 70 V110 H0Z" fill="var(--hill-2)" opacity=".8" />
+      <path d="M0 96 C90 80 170 92 250 94 S350 86 400 90 V110 H0Z" fill="var(--bg)" />
+    </svg>
+  );
+}
+
+function merchantColor(state, id) {
+  const i = Math.max(0, state.merchants.findIndex(m => m.id === id));
+  return `var(--m${(i % 4) + 1})`;
+}
+function Avatar({ state, merchantId }) {
+  const m = E.findMerchant(state, merchantId);
+  return <span className="avatar" style={{ background: merchantColor(state, merchantId) }} aria-hidden="true">{m ? m.name[0] : '?'}</span>;
+}
+function ModeChip({ mode }) { return <span className={'chip ' + (mode === 'payment' ? 'teal' : '')}>{MODE[mode].short}</span>; }
+
+function Bar({ budget, completed, pending }) {
+  const total = Math.max(budget, completed + pending, 1);
+  const over = completed + pending > budget;
+  return (
+    <div className="bar" role="img" aria-label={`${$(completed)} spent and ${$(pending)} held of ${$(budget)}`}>
+      <span className="c" style={{ width: (Math.min(completed, budget) / total * 100) + '%' }} />
+      <span className="p" style={{ width: (Math.max(0, Math.min(pending, budget - completed)) / total * 100) + '%' }} />
+      {over && <span className="o" style={{ width: ((completed + pending - budget) / total * 100) + '%' }} />}
+      {over && <span className="mark" style={{ left: (budget / total * 100) + '%' }} />}
+    </div>
+  );
+}
+
+function MoneyInput({ id, label, value, onChange, hint, autoFocus }) {
+  return (
+    <div className="field">
+      <span><label htmlFor={id}>{label}</label></span>
+      <div className="money"><span>$</span><input id={id} inputMode="decimal" autoComplete="off" placeholder="0.00" value={value} autoFocus={autoFocus} onChange={e => onChange(e.target.value.replace(/[^0-9.,$]/g, ''))} /></div>
+      {hint && <small>{hint}</small>}
+    </div>
+  );
+}
+function TextField({ id, label, value, onChange, placeholder, hint, maxLength }) {
+  return (
+    <div className="field">
+      <span><label htmlFor={id}>{label}</label></span>
+      <input id={id} className="input" value={value} placeholder={placeholder} maxLength={maxLength || 60} onChange={e => onChange(e.target.value)} />
+      {hint && <small>{hint}</small>}
+    </div>
+  );
+}
+function Seg({ options, value, onChange, label }) {
+  return <div className="seg" role="group" aria-label={label}>{options.map(o => <button key={o.value} type="button" aria-pressed={value === o.value} onClick={() => onChange(o.value)}>{o.label}</button>)}</div>;
+}
+function Toggle({ checked, onChange, label, sub }) {
+  return (
+    <button type="button" className="toggle" role="switch" aria-checked={checked} onClick={() => onChange(!checked)}>
+      <span className="grow"><b style={{ display: 'block', fontSize: 15 }}>{label}</b>{sub && <span className="small muted">{sub}</span>}</span>
+      <span className="switch" />
+    </button>
+  );
+}
+
+function Sheet({ title, onClose, children, footer }) {
+  useEffect(() => {
+    const k = e => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
+  }, [onClose]);
+  return (
+    <div className="sheet-wrap" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="scrim" onClick={onClose} />
+      <div className="sheet">
+        <div className="sheet-head"><span className="grabber" /><h2>{title}</h2><button className="icon-btn" onClick={onClose} aria-label="Close">×</button></div>
+        <div className="sheet-body">{children}</div>
+        {footer && <div className="sheet-foot">{footer}</div>}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- encouragement ---------- */
+function pickEncouragement(state, now, prog, goal) {
+  const c = [];
+  const goalLine = goal ? (goal.pace && goal.pace.onTrack ? `Your ${goal.name} goal is still on track.` : `Your ${goal.name} goal is still yours to build.`) : '';
+  const lastDecl = prog.declined.intents[prog.declined.intents.length - 1];
+  if (lastDecl && now - lastDecl.lastAt < 7 * E.DAY) c.push({ id: 'decl_' + lastDecl.intentId, at: lastDecl.lastAt, text: `You gave yourself time to decide. ${goalLine}` });
+  const waits = state.shieldEvents.filter(e => e.outcome === 'waited' && e.at <= now);
+  const lastWait = waits[waits.length - 1];
+  if (lastWait && now - lastWait.at < 3 * E.DAY) {
+    const env = E.findEnv(state, lastWait.envelopeId); const m = env && E.findMerchant(state, env.merchantId);
+    c.push({ id: 'sh_' + lastWait.id, at: lastWait.at, text: `You closed ${m ? m.name : 'the app'} instead of browsing. That was the plan you made.` });
+  }
+  state.wishlist.filter(w => w.status === 'waiting' && w.revisitAt <= now).forEach(w => c.push({ id: 'wish_' + w.id, at: w.revisitAt, text: `The waiting period for “${w.label}” is over. Decide when you’re ready. Leaving it on the list is a fine answer too.`, action: 'wishlist' }));
+  if (prog.days.streak >= 3) c.push({ id: 'streak_' + prog.days.streak, at: now - 1, text: `${prog.days.streak} days in a row with every envelope inside its budget.` });
+  return c.filter(x => !(state.dismissed || {})[x.id]).sort((a, b) => b.at - a.at)[0] || null;
+}
+
+/* ================= HOME ================= */
+function Home({ ctx }) {
+  const { state, now, open, act } = ctx;
+  const sums = E.activeEnvelopes(state, now).map(e => E.envelopeSummary(state, e.id, now));
+  const avail = sums.reduce((a, x) => a + x.availableCents, 0);
+  const budget = sums.reduce((a, x) => a + x.budgetCents, 0);
+  const goal = E.goalSummary(state, now);
+  const prog = E.progress(state, now);
+  const enc = pickEncouragement(state, now, prog, goal);
+  const pend = sums.flatMap(x => x.pendingChanges.map(c => ({ ...c, sum: x })));
+  const wishWaiting = state.wishlist.filter(w => w.status === 'waiting');
+  const wishReady = wishWaiting.filter(w => w.revisitAt <= now).length;
+  const h = new Date(now).getHours();
+  const greet = h < 5 ? 'Good evening' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  const name = state.profile.name;
+  const dismiss = id => act(s => ({ state: { ...s, dismissed: { ...(s.dismissed || {}), [id]: now } } }));
+
+  return (
+    <div className="screen-in">
+      <section className="hero">
+        <div className="hero-glow" />
+        <Hills />
+        <div className="hero-inner">
+          <p className="eyebrow">{fmtLong(now)}</p>
+          <h1 className="display">{greet}{name ? `, ${name}` : ''}.</h1>
+          <p className="hero-label">Left to spend, by your own plan</p>
+          <p className="hero-num">{$(avail)}</p>
+          <p className="hero-sub">of {$(budget, true)} across {sums.length} envelope{sums.length === 1 ? '' : 's'} · each resets on its own schedule</p>
+          <div className="hero-chips">
+            {sums.map(x => <button key={x.id} className="glass" onClick={() => open('envelope', { id: x.id })}>{x.merchant.name}<b>{$(x.availableCents)}</b></button>)}
+          </div>
+        </div>
+      </section>
+
+      <div className="pad lift">
+        {enc && (
+          <div className="card soft" role="status">
+            <div className="row" style={{ alignItems: 'flex-start' }}>
+              <span style={{ color: 'var(--teal-ink)', width: 22, flex: 'none', marginTop: 2 }}><Icon name="leaf" /></span>
+              <p className="grow" style={{ fontFamily: 'var(--display)', fontSize: 18, lineHeight: 1.35 }}>{enc.text}</p>
+              <button className="icon-btn" style={{ background: 'transparent' }} aria-label="Dismiss" onClick={() => dismiss(enc.id)}>×</button>
+            </div>
+            <div className="row">
+              {enc.action === 'wishlist' && <button className="btn sm secondary" onClick={() => open('wishlist')}>Open wishlist</button>}
+              <button className="link" onClick={() => open('reflect')}>Add a reflection</button>
+            </div>
+          </div>
+        )}
+
+        {goal ? (
+          <div className="card">
+            <div className="row between">
+              <div><p className="eyebrow">Saving toward</p><h2 className="title" style={{ fontSize: 22 }}>{goal.name}</h2></div>
+              {goal.pace && <span className={'chip ' + (goal.pace.onTrack ? 'teal' : 'warn')}>{goal.pace.onTrack ? 'On pace' : 'Behind pace'}</span>}
+            </div>
+            <div className="row between" style={{ alignItems: 'baseline' }}>
+              <span className="big-num">{$(goal.reportedCents, true)}</span>
+              <span className="muted small">of {$(goal.targetCents, true)} target{goal.byDate ? ` by ${new Date(goal.byDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}` : ''}</span>
+            </div>
+            <Bar budget={goal.targetCents} completed={Math.min(goal.reportedCents, goal.targetCents)} pending={0} />
+            <div className="stack small">
+              <div className="row between"><span className="muted">Moved to savings (you reported)</span><b className="tnum">{$(goal.reportedCents)}</b></div>
+              <div className="row between"><span className="muted">Verified deposits</span><span className="chip">Not connected</span></div>
+            </div>
+            <p className="tiny">Your target is the plan. Only money you actually move counts toward it. Skipped or declined purchases are tracked separately.</p>
+            <div className="row">
+              <button className="btn sm secondary" onClick={() => open('savings')}>Record a transfer</button>
+              <button className="link" onClick={() => open('goal')}>Edit goal</button>
+            </div>
+          </div>
+        ) : (
+          <div className="card"><p className="h3">Add something to save toward</p><button className="btn secondary" onClick={() => open('goal')}>Set a goal</button></div>
+        )}
+
+        <div className="tiles">
+          <button className="tile" onClick={() => open('purchase', {})}><span className="ic"><Icon name="card" /></span><b>Try a purchase</b><small>See how an envelope card would respond</small></button>
+          <button className="tile" onClick={() => open('spend', {})}><span className="ic"><Icon name="pen" /></span><b>Log spending</b><small>Add something you bought</small></button>
+          <button className="tile" onClick={() => open('wishlist')}><span className="ic"><Icon name="heart" /></span><b>Wishlist</b><small>{wishWaiting.length} waiting{wishReady ? ` · ${wishReady} ready to revisit` : ''}</small></button>
+          <button className="tile" onClick={() => open('reflect')}><span className="ic"><Icon name="leaf" /></span><b>Reflect</b><small>A minute with how you feel</small></button>
+        </div>
+
+        {pend.length > 0 && (
+          <div className="card flat">
+            <div className="row"><span style={{ width: 20, color: 'var(--warn)' }}><Icon name="clock" /></span><p className="h3">Changes waiting out their cooling-off</p></div>
+            <div className="list">
+              {pend.map((c, i) => (
+                <div className="li" key={i}>
+                  <div className="grow"><div>{c.sum.merchant.name}: {describeChange(c)}</div><div className="sub">Takes effect {fmtWhen(c.effectiveAt)}</div></div>
+                  <button className="btn sm secondary" onClick={() => act(s => E.cancelPending(s, c.sum.id, c.field, c.effectiveAt, now), 'Change cancelled. Your earlier setting stays.')}>Cancel</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ================= ENVELOPES ================= */
+function Envelopes({ ctx }) {
+  const { state, now, open } = ctx;
+  const sums = E.activeEnvelopes(state, now).map(e => E.envelopeSummary(state, e.id, now));
+  return (
+    <div className="pad screen-in">
+      <div className="stack" style={{ paddingTop: 8 }}>
+        <p className="eyebrow">Envelopes</p>
+        <h1 className="display">Decisions you made ahead of time</h1>
+        <p className="muted">Each envelope holds a budget for one shop or app, plus how firmly Arca should help you keep it.</p>
+      </div>
+      {sums.map(x => <EnvelopeCard key={x.id} x={x} ctx={ctx} />)}
+      {sums.length === 0 && <div className="card flat"><p className="muted">No envelopes yet. Make one for a shop you’d like to spend less at.</p></div>}
+      <button className="btn primary block" onClick={() => open('editor', {})}><Icon name="plus" /> New envelope</button>
+    </div>
+  );
+}
+
+function EnvelopeCard({ x, ctx }) {
+  const { state, open } = ctx;
+  const closing = x.pendingChanges.find(c => c.field === 'active');
+  return (
+    <button className="card" style={{ border: 0, textAlign: 'left', cursor: 'pointer' }} onClick={() => open('envelope', { id: x.id })}>
+      <div className="row">
+        <Avatar state={state} merchantId={x.env.merchantId} />
+        <div className="grow"><div className="h3">{x.merchant.name}</div><div className="tiny">{x.cadence === 'weekly' ? 'Weekly' : 'Monthly'} · resets {fmtDay(x.resetsAt)}</div></div>
+        <ModeChip mode={x.rules.mode} />
+      </div>
+      <div className="row between" style={{ alignItems: 'baseline' }}>
+        <span className="big-num">{$(x.availableCents)}</span>
+        <span className="small muted">available of {$(x.budgetCents, true)}</span>
+      </div>
+      <Bar budget={x.budgetCents} completed={x.completedCents} pending={x.pendingCents} />
+      <div className="row wrap small muted" style={{ gap: 14 }}>
+        <span>Spent <b className="tnum" style={{ color: 'var(--ink)' }}>{$(x.completedCents)}</b></span>
+        <span>Held <b className="tnum" style={{ color: 'var(--ink)' }}>{$(x.pendingCents)}</b></span>
+        {x.rules.commitment && <span className="chip teal">Commitment · {x.rules.coolingHours}h</span>}
+        {x.overCents > 0 && <span className="chip warn">{$(x.overCents)} over</span>}
+        {closing && <span className="chip stop">Closes {fmtDay(closing.effectiveAt)}</span>}
+      </div>
+    </button>
+  );
+}
+
+function EnvelopeSheet({ ctx, id }) {
+  const { state, now, open, act, close } = ctx;
+  const [confirmClose, setConfirmClose] = useState(false);
+  const x = E.envelopeSummary(state, id, now);
+  if (!x || !x.rules.active) return <Sheet title="Envelope closed" onClose={close}><p className="muted">This envelope is closed.</p></Sheet>;
+  const m = x.merchant.name;
+  const holds = state.holds.filter(h => h.envelopeId === id && h.status === 'pending');
+  const spends = state.spend.filter(s => s.envelopeId === id && s.occurredAt >= x.periodStart && s.occurredAt < x.resetsAt).sort((a, b) => b.occurredAt - a.occurredAt);
+  const declines = state.attempts.filter(a => a.envelopeId === id && a.decision === 'declined' && a.at >= x.periodStart && a.at <= now).sort((a, b) => b.at - a.at);
+  const doClose = () => {
+    const r = act(s => E.requestChange(s, id, 'active', false, now));
+    if (!r) return;
+    if (r.delayed) { ctx.notify(`The ${m} envelope will close ${fmtWhen(r.effectiveAt)}, after its cooling-off.`); setConfirmClose(false); }
+    else { ctx.notify(`The ${m} envelope is closed.`); close(); }
+  };
+  return (
+    <Sheet title={m} onClose={close}>
+      <div className="row"><Avatar state={state} merchantId={x.env.merchantId} /><div className="grow"><div className="small muted">{x.cadence === 'weekly' ? 'Weekly' : 'Monthly'} envelope</div><div className="small">Resets {fmtWhen(x.resetsAt)}</div></div><ModeChip mode={x.rules.mode} /></div>
+      <div className="card">
+        <div className="row between" style={{ alignItems: 'baseline' }}><span className="big-num">{$(x.availableCents)}</span><span className="small muted">available now</span></div>
+        <Bar budget={x.budgetCents} completed={x.completedCents} pending={x.pendingCents} />
+        <div className="legend"><span><i style={{ background: 'var(--teal)' }} />Completed</span><span><i style={{ background: 'var(--pending)' }} />Pending hold</span>{x.overCents > 0 && <span><i style={{ background: 'var(--warn)' }} />Over budget</span>}</div>
+        <div className="stats">
+          <div className="stat"><b>{$(x.budgetCents)}</b><span>Budget this period</span></div>
+          <div className="stat"><b>{$(x.completedCents)}</b><span>Completed spending</span></div>
+          <div className="stat"><b>{$(x.pendingCents)}</b><span>Pending holds</span></div>
+          <div className="stat"><b>{$(x.availableCents)}</b><span>Available</span></div>
+        </div>
+        {x.overCents > 0 && <p className="note warn">This envelope is {$(x.overCents)} past its budget, often from a budget reduction, a manual entry, or an envelope without payment restriction. Nothing already spent is reversed.</p>}
+      </div>
+
+      <div className="stack">
+        <p className="eyebrow">How Arca steps in</p>
+        <p><b>{MODE[x.rules.mode].label}.</b> <span className="muted small">{MODE[x.rules.mode].desc}</span></p>
+        <p className="small">{x.rules.commitment
+          ? <>Commitment mode is on. Raising the budget, loosening the restriction, turning commitment off or closing this envelope waits <b>{x.rules.coolingHours} hours</b>. Lowering the budget or tightening the restriction applies right away.</>
+          : <>Commitment mode is off, so changes apply right away. Turn it on to add a cooling-off period before any loosening.</>}</p>
+      </div>
+
+      {x.pendingChanges.length > 0 && (
+        <div className="card warnc">
+          <p className="h3">Waiting out the cooling-off</p>
+          {x.pendingChanges.map((c, i) => (
+            <div className="row between" key={i}>
+              <div className="grow small"><div>{describeChange(c)}</div><div className="tiny">Takes effect {fmtWhen(c.effectiveAt)}</div></div>
+              <button className="btn sm secondary" onClick={() => act(s => E.cancelPending(s, id, c.field, c.effectiveAt, now), 'Change cancelled.')}>Cancel</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="tiles">
+        <button className="tile" onClick={() => open('editor', { id })}><span className="ic"><Icon name="pen" /></span><b>Edit rules</b><small>Budget, restriction, commitment</small></button>
+        <button className="tile" onClick={() => open('card', { envId: id })}><span className="ic"><Icon name="card" /></span><b>Demo card</b><small>Preview only, no live card</small></button>
+        <button className="tile" onClick={() => open('purchase', { envId: id })}><span className="ic"><Icon name="check" /></span><b>Try a purchase</b><small>Simulate an authorization</small></button>
+        <button className="tile" onClick={() => open('shield', { envId: id })}><span className="ic"><Icon name="shield" /></span><b>Preview shield</b><small>{x.rules.mode === 'access' ? 'What opening the app looks like' : 'Available with shop shield'}</small></button>
+      </div>
+      <button className="btn secondary block" onClick={() => open('spend', { envId: id })}>Log spending here</button>
+
+      {holds.length > 0 && (
+        <div className="stack">
+          <p className="eyebrow">Pending holds</p>
+          <p className="tiny">Approved card payments are reserved until the merchant captures or releases them.</p>
+          <div className="card flat" style={{ gap: 0, paddingBlock: 6 }}>
+            <div className="list">{holds.map(h => (
+              <div className="li" key={h.id} style={{ flexWrap: 'wrap' }}>
+                <div className="grow"><div>{h.note || 'Card purchase'}</div><div className="sub">Authorized {relDay(h.createdAt, now)}, {fmtTime(h.createdAt)}</div></div>
+                <span className="amt">{$(h.amountCents)}</span>
+                <div className="row" style={{ width: '100%', justifyContent: 'flex-end' }}>
+                  <button className="btn sm secondary" onClick={() => open('capture', { holdId: h.id })}>Merchant captures</button>
+                  <button className="btn sm secondary" onClick={() => act(s => E.releaseHold(s, h.id, now), r => `${$(r.releasedCents)} released back to ${m}.`)}>Merchant releases</button>
+                </div>
+              </div>))}</div>
+          </div>
+        </div>
+      )}
+
+      <div className="stack">
+        <p className="eyebrow">This period</p>
+        <div className="card flat" style={{ gap: 0, paddingBlock: 6 }}>
+          {spends.length === 0 && declines.length === 0 && <p className="muted small" style={{ padding: '10px 0' }}>Nothing yet this period.</p>}
+          <div className="list">
+            {spends.map(sp => {
+              const ref = E.refundedCents(state, sp.id, now);
+              return (
+                <div className="li" key={sp.id}>
+                  <div className="grow"><div>{sp.note || (sp.source === 'card' ? 'Card purchase' : 'Logged purchase')}</div>
+                    <div className="sub">{relDay(sp.occurredAt, now)} · {sp.source === 'card' ? 'demo card' : 'logged by you'}{ref > 0 ? ` · ${$(ref)} refunded` : ''}</div></div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div className={'amt ' + (ref === sp.amountCents ? 'strike' : '')}>{$(sp.amountCents)}</div>
+                    {ref < sp.amountCents && <button className="link" style={{ fontSize: 12.5 }} onClick={() => open('refund', { spendId: sp.id })}>Refund</button>}
+                  </div>
+                </div>
+              );
+            })}
+            {declines.map(a => (
+              <div className="li" key={a.id}>
+                <div className="grow"><div>{a.note || 'Purchase attempt'} <span className="chip stop" style={{ marginLeft: 4 }}>Declined</span></div><div className="sub">{relDay(a.at, now)} · {a.reason === 'wrong_merchant' ? 'other merchant' : 'over allowance'}{a.isRetry ? ' · retry, counted once' : ''}</div></div>
+                <span className="amt muted">{$(a.amountCents)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {!confirmClose ? (
+        <button className="btn danger" onClick={() => setConfirmClose(true)}>Close this envelope</button>
+      ) : (
+        <div className="card warnc">
+          <p className="small">{x.rules.commitment ? `Commitment mode is on, so the envelope stays active for ${x.rules.coolingHours} hours and then closes. You can cancel before then.` : 'The envelope and its demo cards stop working right away. Its history stays in Progress.'}</p>
+          <div className="row"><button className="btn sm primary" onClick={doClose}>{x.rules.commitment ? 'Schedule closing' : 'Close envelope'}</button><button className="btn sm secondary" onClick={() => setConfirmClose(false)}>Keep it</button></div>
+        </div>
+      )}
+    </Sheet>
+  );
+}
+
+function EditorSheet({ ctx, id }) {
+  const { state, now, act, close, replace } = ctx;
+  const editing = !!id;
+  const sum = editing ? E.envelopeSummary(state, id, now) : null;
+  const used = new Set(E.activeEnvelopes(state, now).map(e => e.merchantId));
+  const freeMerchants = state.merchants.filter(m => !used.has(m.id));
+  const [merchantId, setMerchantId] = useState(editing ? sum.env.merchantId : (freeMerchants[0] ? freeMerchants[0].id : '__new'));
+  const [customName, setCustomName] = useState('');
+  const [customDomain, setCustomDomain] = useState('');
+  const [cadence, setCadence] = useState(editing ? sum.cadence : 'monthly');
+  const [budget, setBudget] = useState(editing ? centsToInput(sum.budgetCents) : '75.00');
+  const [mode, setMode] = useState(editing ? sum.rules.mode : 'payment');
+  const [commitment, setCommitment] = useState(editing ? sum.rules.commitment : true);
+  const [cooling, setCooling] = useState(editing ? sum.rules.coolingHours : 48);
+  const budgetCents = E.toCents(budget);
+
+  // Preview: run the same requests on a copy and report timing.
+  let preview = [], previewErr = null;
+  if (editing && budgetCents) {
+    try {
+      let s = state;
+      [['commitment', commitment], ['cooling', cooling], ['mode', mode], ['budget', budgetCents]].forEach(([f, v]) => {
+        const out = E.requestChange(s, id, f, v, now); s = out.state;
+        if (!out.result.unchanged || out.result.cancelledPending) preview.push({ f, v, ...out.result });
+      });
+    } catch (e) { previewErr = e.message; }
+  }
+  const save = () => {
+    if (!budgetCents) { ctx.notify('Enter a budget above $0.'); return; }
+    if (editing) {
+      let ok = true;
+      [['commitment', commitment], ['cooling', cooling], ['mode', mode], ['budget', budgetCents]].forEach(([f, v]) => { if (ok && !act(s => E.requestChange(s, id, f, v, now))) ok = false; });
+      if (!ok) return;
+      const delayed = preview.filter(p => p.delayed);
+      ctx.notify(delayed.length ? `Saved. ${delayed.length} change${delayed.length > 1 ? 's' : ''} will wait out the cooling-off.` : 'Saved. Changes apply now.');
+      close();
+    } else {
+      let mid = merchantId;
+      if (mid === '__new') { const r = act(s => E.addMerchant(s, { name: customName, domain: customDomain })); if (!r) return; mid = r.merchantId; }
+      const r = act(s => E.createEnvelope(s, { merchantId: mid, cadence, budgetCents, mode, commitment, coolingHours: cooling }, now));
+      if (r) { ctx.notify('Envelope created with a reusable demo card.'); replace('envelope', { id: r.envelopeId }); }
+    }
+  };
+  const sentence = p => {
+    const what = p.f === 'budget' ? `Budget to ${$(p.v)}` : p.f === 'mode' ? `Restriction to ${MODE[p.v].label.toLowerCase()}` : p.f === 'commitment' ? `Commitment mode ${p.v ? 'on' : 'off'}` : `Cooling-off to ${p.v} hours`;
+    return p.delayed ? `${what}: waits until ${fmtWhen(p.effectiveAt)}` : `${what}: applies now${p.cancelledPending ? ' (replaces a pending change)' : ''}`;
+  };
+  return (
+    <Sheet title={editing ? `Edit ${sum.merchant.name}` : 'New envelope'} onClose={close}
+      footer={<button className="btn primary block" disabled={!budgetCents || (!editing && merchantId === '__new' && !customName.trim())} onClick={save}>{editing ? 'Save changes' : 'Create envelope'}</button>}>
+      {!editing && (
+        <div className="field">
+          <span>Merchant</span>
+          <div className="pills">
+            {freeMerchants.map(mm => <button key={mm.id} type="button" className="pill" aria-pressed={merchantId === mm.id} onClick={() => setMerchantId(mm.id)}>{mm.name}</button>)}
+            <button type="button" className="pill" aria-pressed={merchantId === '__new'} onClick={() => setMerchantId('__new')}>+ Custom</button>
+          </div>
+        </div>
+      )}
+      {!editing && merchantId === '__new' && (
+        <>
+          <TextField id="cm-name" label="Merchant name" value={customName} onChange={setCustomName} placeholder="e.g. Fernway Outfitters" />
+          <TextField id="cm-domain" label="Website (optional)" value={customDomain} onChange={setCustomDomain} placeholder="fernway.com" hint="Used for the shopping shield. A card network may describe this merchant differently, so a live card lock would be checked against the processor’s merchant data." />
+        </>
+      )}
+      {!editing ? (
+        <div className="field"><span>Resets</span><Seg label="Cadence" value={cadence} onChange={setCadence} options={[{ value: 'weekly', label: 'Weekly (Mondays)' }, { value: 'monthly', label: 'Monthly (1st)' }]} /></div>
+      ) : (
+        <p className="small muted">Resets {sum.cadence === 'weekly' ? 'every Monday' : 'on the 1st of each month'}. To change the cadence, close this envelope and make a new one, so past periods stay accurate.</p>
+      )}
+      <MoneyInput id="ed-budget" label={`Budget per ${editing ? (sum.cadence === 'weekly' ? 'week' : 'month') : (cadence === 'weekly' ? 'week' : 'month')}`} value={budget} onChange={setBudget}
+        hint={editing ? 'Lowering it applies now. It doesn’t reverse anything already spent; available simply shows $0 until the next reset.' : null} />
+      <div className="field">
+        <span>How Arca steps in</span>
+        <div className="stack">
+          {['reminder', 'access', 'payment'].map(k => (
+            <button key={k} type="button" className="choice" aria-pressed={mode === k} onClick={() => setMode(k)}><b>{MODE[k].label}</b><span>{MODE[k].desc}</span></button>
+          ))}
+        </div>
+      </div>
+      <div className="card flat">
+        <Toggle checked={commitment} onChange={setCommitment} label="Commitment mode" sub="Adds a cooling-off period before any change that loosens this envelope." />
+        {commitment && <Seg label="Cooling-off" value={cooling} onChange={setCooling} options={[24, 48, 72].map(h => ({ value: h, label: `${h} hours` }))} />}
+        <p className="tiny">Delayed: raising the budget, a weaker restriction, a shorter cooling-off, turning commitment off, closing the envelope. Immediate: everything that makes it stricter.</p>
+      </div>
+      {editing && (preview.length > 0 || previewErr) && (
+        <div className="card soft">
+          <p className="h3">When these changes apply</p>
+          {previewErr ? <p className="small">{previewErr}</p> : preview.map((p, i) => <p className="small" key={i}>{sentence(p)}</p>)}
+        </div>
+      )}
+    </Sheet>
+  );
+}
+
+/* ================= CARD PREVIEW ================= */
+function DemoCard({ state, card, reveal }) {
+  const m = E.findMerchant(state, card.merchantId);
+  return (
+    <div className={'vcard ' + (card.type === 'single_use' ? 'single ' : '') + (card.status !== 'active' ? 'dim' : '')} aria-label={`Demo ${card.type === 'single_use' ? 'single-use' : 'reusable'} card for ${m.name}, no live card`}>
+      <div className="ribbon">DEMO</div>
+      <div className="wave" />
+      <div className="row between" style={{ position: 'relative' }}>
+        <div><small>Arca envelope</small><div style={{ fontFamily: 'var(--display)', fontSize: 22 }}>{m.name}</div></div>
+      </div>
+      <div style={{ position: 'relative' }}>
+        <div className="pan">{reveal ? `0000 0000 0000 ${card.last4}` : `•••• •••• •••• ${card.last4}`}</div>
+        <div className="stack" style={{ marginTop: 6, gap: 2 }}>
+          <small>{card.type === 'single_use' ? 'Single-use' : 'Reusable'} · locked to {m.name}{card.status === 'used' ? ' · used' : ''}</small>
+          <small>{reveal ? 'Exp 00/00 · CVC 000 · placeholder' : 'Demo — no live card'}</small>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CardSheet({ ctx, envId }) {
+  const { state, now, act, close, open } = ctx;
+  const sum = E.envelopeSummary(state, envId, now);
+  const cards = E.cardsFor(state, envId).slice().reverse();
+  const [reveal, setReveal] = useState(false);
+  return (
+    <Sheet title={`${sum.merchant.name} demo cards`} onClose={close}>
+      <p className="note warn"><b>Demo — no live card.</b> Nothing has been issued, funded or connected to a bank. Card numbers here are placeholders and can’t be used anywhere.</p>
+      {cards.map(c => <DemoCard key={c.id} state={state} card={c} reveal={reveal} />)}
+      <button className="btn secondary" onClick={() => setReveal(!reveal)}>{reveal ? 'Hide placeholder details' : 'Show placeholder details'}</button>
+      <div className="stats">
+        <div className="stat" style={{ gap: 6 }}><b style={{ fontSize: 15 }}>Reusable, merchant-locked</b><span>Stays open for repeat purchases at {sum.merchant.name} only. Each payment is checked against what’s left in the envelope.</span></div>
+        <div className="stat" style={{ gap: 6 }}><b style={{ fontSize: 15 }}>Single-use</b><span>Closes after one approved purchase. Useful for a one-off order or a new shop you don’t fully trust.</span></div>
+      </div>
+      <div className="row wrap">
+        <button className="btn sm secondary" onClick={() => act(s => E.createCard(s, envId, 'single_use', now), 'Single-use demo card added.')}>Add a single-use demo card</button>
+        <button className="btn sm primary" onClick={() => open('purchase', { envId })}>Try a purchase</button>
+      </div>
+      <details className="fold">
+        <summary>What a live version would need</summary>
+        <div className="stack small muted" style={{ marginTop: 10 }}>
+          <p>A managed card program approved by its issuing partner and sponsor bank, identity checks run by that partner, and disclosures naming the bank that issues the card.</p>
+          <p>Merchant locks and spending caps would run in the provider’s own rules engine, before any server of ours is involved. Card numbers would be shown through the provider’s secure display component and never stored in this app.</p>
+          <p>A merchant lock checks the merchant as the card network reports it. Names can differ from the brand you know, and Apple Pay or marketplace sellers can add complications.</p>
+        </div>
+      </details>
+    </Sheet>
+  );
+}
+
+/* ================= PURCHASE DEMO ================= */
+function PurchaseSheet({ ctx, envId, cardId: initCard, merchantId: initMerchant, amountCents: initAmount, note: initNote }) {
+  const { state, now, act, close, open, replace } = ctx;
+  const active = E.activeEnvelopes(state, now).map(e => e.id);
+  const cards = state.cards.filter(c => active.includes(c.envelopeId));
+  const firstCard = initCard || (envId ? (cards.find(c => c.envelopeId === envId && c.status === 'active') || {}).id : null) || (cards.find(c => c.status === 'active') || cards[0] || {}).id;
+  const [cardId, setCardId] = useState(firstCard || '');
+  const card = E.findCard(state, cardId);
+  const [merchantId, setMerchantId] = useState(initMerchant || (card ? card.merchantId : 'amazon'));
+  const [amount, setAmount] = useState(initAmount ? centsToInput(initAmount) : '');
+  const [note, setNote] = useState(initNote || '');
+  const [result, setResult] = useState(null);
+  if (!cards.length) return <Sheet title="Try a purchase" onClose={close}><p className="muted">Create an envelope first. Each one comes with a demo card.</p></Sheet>;
+  const sum = card ? E.envelopeSummary(state, card.envelopeId, now) : null;
+  const cents = E.toCents(amount);
+  const pickCard = id => { setCardId(id); const c = E.findCard(state, id); if (c) setMerchantId(c.merchantId); };
+  const submit = () => {
+    const r = act(s => E.attemptPurchase(s, { cardId, merchantId, amountCents: cents, now, note }));
+    if (r) setResult({ ...r, cardId, merchantId, amountCents: cents, note, envelopeId: card.envelopeId });
+  };
+  if (result) return <PurchaseResult ctx={ctx} r={result} onAgain={() => setResult(null)} />;
+  return (
+    <Sheet title="Try a purchase" onClose={close}
+      footer={<><button className="btn primary block" disabled={!cents || !cardId} onClick={submit}>Pay {cents ? $(cents) : ''} with demo card</button><p className="tiny" style={{ textAlign: 'center' }}>Simulated authorization. No money moves.</p></>}>
+      <div className="field"><span>Demo card</span>
+        <select className="input" id="pd-card" value={cardId} onChange={e => pickCard(e.target.value)}>
+          {cards.map(c => { const m = E.findMerchant(state, c.merchantId); return <option key={c.id} value={c.id}>{m.name} · {c.type === 'single_use' ? 'single-use' : 'reusable'} ••{c.last4}{c.status === 'used' ? ' (used)' : ''}</option>; })}
+        </select>
+        {sum && <small>{sum.merchant.name} envelope: {$(sum.availableCents)} available · {MODE[sum.rules.mode].label.toLowerCase()}</small>}
+      </div>
+      <div className="field"><span>Where you’re checking out</span>
+        <div className="pills">{state.merchants.map(m => <button key={m.id} type="button" className="pill" aria-pressed={merchantId === m.id} onClick={() => setMerchantId(m.id)}>{m.name}</button>)}</div>
+      </div>
+      <MoneyInput id="pd-amount" label="Amount" value={amount} onChange={setAmount} />
+      {sum && (
+        <div className="pills">
+          <button type="button" className="pill" onClick={() => setAmount(centsToInput(sum.availableCents))}>Exactly what’s left ({$(sum.availableCents)})</button>
+          <button type="button" className="pill" onClick={() => setAmount(centsToInput(sum.availableCents + 1))}>1¢ over</button>
+          <button type="button" className="pill" onClick={() => setAmount('24.99')}>$24.99</button>
+        </div>
+      )}
+      <TextField id="pd-note" label="What is it? (optional)" value={note} onChange={setNote} placeholder="e.g. Wool sweater" />
+    </Sheet>
+  );
+}
+
+function PurchaseResult({ ctx, r, onAgain }) {
+  const { state, now, act, close, open, replace } = ctx;
+  const m = E.findMerchant(state, E.findCard(state, r.cardId).merchantId).name;
+  const at = E.findMerchant(state, r.merchantId).name;
+  const hold = r.holdId ? state.holds.find(h => h.id === r.holdId) : null;
+  if (r.decision === 'approved') {
+    return (
+      <Sheet title="Approved" onClose={close}>
+        <div className="card soft"><p style={{ fontFamily: 'var(--display)', fontSize: 20 }}>{$(r.amountCents)} at {at} fits your plan.</p>
+          <p className="small">It’s now a pending hold on your {m} envelope. Holds count against your allowance until the merchant captures the payment or releases it.</p></div>
+        {r.reason === 'approved_over_budget' && <p className="note warn">This takes the envelope {$(r.overByCents)} past its budget. Payment restriction is off for {m}, so the card approves it. Turn on payment restriction to have the card decline next time.</p>}
+        {hold && hold.status === 'pending' ? (
+          <div className="stack">
+            <p className="eyebrow">What the merchant does next</p>
+            <div className="row wrap">
+              <button className="btn sm secondary" onClick={() => open('capture', { holdId: r.holdId })}>Merchant captures</button>
+              <button className="btn sm secondary" onClick={() => act(s => E.releaseHold(s, r.holdId, now), x => `Released. ${$(x.releasedCents)} is available again.`)}>Merchant releases</button>
+            </div>
+          </div>
+        ) : hold && <p className="small muted">This hold was {hold.status}.</p>}
+        <div className="row"><button className="btn secondary" onClick={onAgain}>Try another</button><button className="btn primary grow" onClick={close}>Done</button></div>
+      </Sheet>
+    );
+  }
+  const copy = (DECLINE_COPY[r.reason] || (() => 'The payment was declined.'))(r, m, at);
+  const canOverride = r.reason === 'over_allowance';
+  return (
+    <Sheet title="Paused at checkout" onClose={close}>
+      <div className="card">
+        <p style={{ fontFamily: 'var(--display)', fontSize: 21, lineHeight: 1.3 }}>Not this time. Nothing was charged.</p>
+        <p className="muted">{copy}</p>
+        {r.isRetry && <p className="tiny">This looks like another try at the same purchase, so Progress counts it once.</p>}
+      </div>
+      <p className="small muted">You set this limit earlier, when you weren’t standing at a checkout. Here are your options.</p>
+      <div className="stack">
+        <button className="btn primary block" onClick={() => replace('leave', { r })}>Leave it for now</button>
+        <button className="btn secondary block" onClick={() => {
+          const out = act(s => E.addWish(s, { label: r.note || `${at} purchase`, merchantId: r.merchantId, envelopeId: r.envelopeId, amountCents: r.amountCents, intentId: r.intentId }, now));
+          if (out) { ctx.notify(out.duplicate ? 'It’s already on your wishlist.' : `Added to your wishlist. Revisit it ${fmtDay(out.revisitAt)}.`); close(); }
+        }}>Add to wishlist</button>
+        {canOverride
+          ? <button className="btn ghost" onClick={() => replace('override', { r })}>Request an override</button>
+          : <p className="tiny" style={{ textAlign: 'center' }}>{r.reason === 'wrong_merchant' ? `Overrides can’t change which merchant a card works at. Make an envelope for ${at} if you want a plan there.` : 'There’s nothing to override on this card.'}</p>}
+      </div>
+    </Sheet>
+  );
+}
+
+function LeaveSheet({ ctx, r }) {
+  const { now, act, close } = ctx;
+  const [label, setLabel] = useState(r.note || '');
+  const [prompt, setPrompt] = useState(REFLECT_PROMPTS[3]);
+  const [text, setText] = useState('');
+  const save = () => {
+    if (!act(s => E.recordForgone(s, { envelopeId: r.envelopeId, merchantId: r.merchantId, label: label || 'Skipped purchase', amountCents: r.amountCents, intentId: r.intentId, source: 'decline' }, now))) return;
+    if (text.trim()) act(s => E.addReflection(s, { text, prompt }, now));
+    ctx.notify('You gave yourself time to decide. If you buy it later, mark it in Progress.');
+    close();
+  };
+  return (
+    <Sheet title="Leave it for now" onClose={close} footer={<button className="btn primary block" onClick={save}>Save and close</button>}>
+      <p className="muted">This is noted as a purchase you chose to skip, worth {$(r.amountCents)}. You can mark it “bought later” at any time, and it won’t count as savings unless you move the money yourself.</p>
+      <TextField id="lv-label" label="What was it?" value={label} onChange={setLabel} placeholder="e.g. Wool sweater" />
+      <div className="field"><span>A short reflection (optional)</span>
+        <div className="pills">{REFLECT_PROMPTS.map(p => <button key={p} type="button" className="pill" style={{ fontSize: 13 }} aria-pressed={prompt === p} onClick={() => setPrompt(p)}>{p}</button>)}</div>
+        <textarea id="lv-text" className="input" value={text} onChange={e => setText(e.target.value)} placeholder="Only you see this." maxLength={400} />
+      </div>
+    </Sheet>
+  );
+}
+
+function OverrideSheet({ ctx, r }) {
+  const { state, now, act, close, replace } = ctx;
+  const sum = E.envelopeSummary(state, r.envelopeId, now);
+  const target = sum.budgetCents + Math.max(1, r.amountCents - sum.availableCents);
+  const [done, setDone] = useState(null);
+  const delayed = sum.rules.commitment;
+  const effective = now + sum.rules.coolingHours * E.HOUR;
+  const submit = () => { const out = act(s => E.requestChange(s, r.envelopeId, 'budget', target, now)); if (out) setDone(out); };
+  if (done) {
+    return (
+      <Sheet title={done.delayed ? 'Override scheduled' : 'Budget raised'} onClose={close}>
+        <div className="card soft">
+          {done.delayed
+            ? <p>Your {sum.merchant.name} budget will rise to <b>{$(target)}</b> on <b>{fmtWhen(done.effectiveAt)}</b>. You can cancel any time before then from the envelope.</p>
+            : <p>Your {sum.merchant.name} budget is now <b>{$(target)}</b>.</p>}
+        </div>
+        <p className="note">The declined payment didn’t go through and won’t complete on its own. {done.delayed ? 'Once the change takes effect, you would need to check out again.' : 'To buy it, you’d need to check out again.'}</p>
+        {!done.delayed && <button className="btn primary block" onClick={() => replace('purchase', { cardId: r.cardId, merchantId: r.merchantId, amountCents: r.amountCents, note: r.note })}>Check out again</button>}
+        <button className="btn secondary block" onClick={close}>Done</button>
+      </Sheet>
+    );
+  }
+  return (
+    <Sheet title="Request an override" onClose={close}>
+      <p className="muted">An override raises this envelope’s budget enough for this purchase. It changes the plan rather than approving the declined payment.</p>
+      <div className="stats">
+        <div className="stat"><b>{$(sum.budgetCents)}</b><span>Budget now</span></div>
+        <div className="stat"><b>{$(target)}</b><span>Budget after override</span></div>
+      </div>
+      {delayed
+        ? <p className="note warn">Commitment mode is on. This increase waits {sum.rules.coolingHours} hours and takes effect around {fmtWhen(effective)}. You chose this delay when you set up the envelope.</p>
+        : <p className="note">Commitment mode is off, so the higher budget applies right away.</p>}
+      <p className="small muted">The declined payment won’t complete by itself. After the change applies, you’d need to check out again.</p>
+      <button className="btn primary block" onClick={submit}>{delayed ? `Schedule increase to ${$(target)}` : `Raise budget to ${$(target)}`}</button>
+      <button className="btn secondary block" onClick={() => replace('leave', { r })}>Actually, leave it for now</button>
+    </Sheet>
+  );
+}
+
+function CaptureSheet({ ctx, holdId }) {
+  const { state, now, act, close } = ctx;
+  const h = state.holds.find(x => x.id === holdId);
+  const [amount, setAmount] = useState(h ? centsToInput(h.amountCents) : '');
+  if (!h || h.status !== 'pending') return <Sheet title="Capture" onClose={close}><p className="muted">This hold is already settled.</p></Sheet>;
+  const cents = E.toCents(amount);
+  return (
+    <Sheet title="Merchant captures" onClose={close} footer={<button className="btn primary block" disabled={!cents} onClick={() => { if (act(s => E.captureHold(s, holdId, cents, now), x => x.releasedCents ? `Captured. ${$(x.releasedCents)} of the hold was released.` : x.overCaptureCents ? `Captured ${$(x.overCaptureCents)} more than authorized.` : 'Captured. It now counts as completed spending.')) close(); }}>Capture {cents ? $(cents) : ''}</button>}>
+      <p className="muted">The merchant settles the {$(h.amountCents)} authorization. The hold becomes completed spending in the period it was authorized, {fmtDay(h.createdAt)}.</p>
+      <MoneyInput id="cap-amt" label="Captured amount" value={amount} onChange={setAmount} hint="Less than the hold releases the rest. More is possible for tips or final weights: card limits apply when a payment is authorized, not when it settles." />
+    </Sheet>
+  );
+}
+
+function RefundSheet({ ctx, spendId }) {
+  const { state, now, act, close } = ctx;
+  const sp = state.spend.find(x => x.id === spendId);
+  const remaining = sp ? sp.amountCents - E.refundedCents(state, sp.id) : 0;
+  const [amount, setAmount] = useState(centsToInput(remaining));
+  const cents = E.toCents(amount);
+  return (
+    <Sheet title="Record a refund" onClose={close} footer={<button className="btn primary block" disabled={!cents} onClick={() => { if (act(s => E.refundSpend(s, spendId, cents, now), `${$(cents)} refunded.`)) close(); }}>Refund {cents ? $(cents) : ''}</button>}>
+      <p className="muted">{sp.note || 'Purchase'} · {$(sp.amountCents)} on {fmtDay(sp.occurredAt)}. Up to {$(remaining)} can still be refunded.</p>
+      <p className="small muted">A refund restores allowance in the period of the original purchase. A refund of last month’s purchase won’t add to this month.</p>
+      <MoneyInput id="rf-amt" label="Refund amount" value={amount} onChange={setAmount} />
+    </Sheet>
+  );
+}
+
+/* ================= SHIELD ================= */
+function ShieldSheet({ ctx, envId }) {
+  const { state, now, act, close } = ctx;
+  const sum = E.envelopeSummary(state, envId, now);
+  const goal = E.goalSummary(state, now);
+  const p = E.progress(state, now);
+  const [phase, setPhase] = useState('shield');
+  const [label, setLabel] = useState('');
+  const [amount, setAmount] = useState('');
+  const m = sum.merchant.name;
+  if (sum.rules.mode !== 'access') {
+    return (
+      <Sheet title="Shopping shield" onClose={close}>
+        <p className="muted">The {m} envelope uses {MODE[sum.rules.mode].label.toLowerCase()}, so opening {m} isn’t shielded.</p>
+        <p className="small muted">{sum.rules.mode === 'payment' ? 'You can use payment restriction and a shield together in the full product. This prototype shows one mode per envelope to keep the differences clear.' : 'Switch this envelope to shopping access restriction in Edit rules to preview the shield.'}</p>
+        <button className="btn secondary" onClick={() => ctx.replace('editor', { id: envId })}>Edit rules</button>
+      </Sheet>
+    );
+  }
+  return (
+    <Sheet title="Shield preview" onClose={close}>
+      {phase === 'shield' && (<>
+        <p className="tiny">What you’d see opening the {m} app or {sum.merchant.domain || 'its website'} on iPhone.</p>
+        <div className="shield">
+          <div className="sicon"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#CFE2DF" strokeWidth="1.6"><path d="M9 6v12M15 6v12" strokeLinecap="round" /></svg></div>
+          <h3>{m} is paused</h3>
+          <p>{$(sum.availableCents)} left this {sum.cadence === 'weekly' ? 'week' : 'month'}. You’ve waited {p.interventions.shieldsWaited} times.{goal ? ` ${goal.name}: ${$(goal.reportedCents, true)} of ${$(goal.targetCents, true)}.` : ''}</p>
+          <button className="sbtn p" onClick={() => { act(s => E.recordShield(s, { envelopeId: envId, outcome: 'waited' }, now)); setPhase('waited'); }}>I’ll wait</button>
+          <button className="sbtn s" onClick={() => { act(s => E.recordShield(s, { envelopeId: envId, outcome: 'unlocked' }, now)); setPhase('unlocked'); }}>I still want to look</button>
+        </div>
+        <p className="tiny">On iPhone, a Screen Time shield is a system screen with a few settable parts: icon, title, short text, colors and up to two buttons. It can’t show what’s in your cart; Arca never sees inside other apps.</p>
+      </>)}
+      {phase === 'waited' && (<>
+        <div className="card soft"><p style={{ fontFamily: 'var(--display)', fontSize: 20 }}>You closed {m} before browsing.</p><p className="small">That counts as a shopping intervention. No amount is attached, because opening an app doesn’t say what you would have spent.</p></div>
+        <p className="small muted">If you had something specific in mind, you can note it as a skipped purchase. This is optional.</p>
+        <TextField id="sh-label" label="What were you going to buy?" value={label} onChange={setLabel} placeholder="e.g. Throw pillows" />
+        <MoneyInput id="sh-amt" label="Rough price (optional)" value={amount} onChange={setAmount} />
+        <button className="btn primary block" disabled={!label.trim()} onClick={() => { if (act(s => E.recordForgone(s, { envelopeId: envId, merchantId: sum.env.merchantId, label, amountCents: amount ? E.toCents(amount) : null, source: 'shield' }, now), 'Noted as a purchase you skipped.')) close(); }}>Save skipped purchase</button>
+        <button className="btn secondary block" onClick={close}>Done</button>
+      </>)}
+      {phase === 'unlocked' && (<>
+        <div className="card flat"><p className="h3">{m} opens for 10 minutes</p><p className="small muted">The full app would lift the shield, then put it back with a scheduled timer. A notification would invite you back to Arca afterwards, because a shield can’t open Arca directly.</p></div>
+        <p className="small muted">This is recorded as an intervention you chose to pass. That’s fine. The record is for your own picture, not a score.</p>
+        <button className="btn primary block" onClick={close}>Done</button>
+      </>)}
+    </Sheet>
+  );
+}
+
+/* ================= LOG / WISHLIST / REFLECT / GOAL ================= */
+function SpendSheet({ ctx, envId }) {
+  const { state, now, act, close } = ctx;
+  const envs = E.activeEnvelopes(state, now);
+  const [eid, setEid] = useState(envId || (envs[0] ? envs[0].id : ''));
+  const [amount, setAmount] = useState('');
+  const [when, setWhen] = useState(0);
+  const [note, setNote] = useState('');
+  const cents = E.toCents(amount);
+  const sum = eid ? E.envelopeSummary(state, eid, now) : null;
+  const occurredAt = when === 0 ? now : E.startOfDay(now) - when * E.DAY + 12 * E.HOUR;
+  const save = () => {
+    const r = act(s => E.addManualSpend(s, { envelopeId: eid, amountCents: cents, occurredAt, note }, now));
+    if (!r) return;
+    const after = E.envelopeSummary(ctx.stateRef.current, eid, now);
+    if (after.overCents > 0) { act(s => E.recordNudge(s, eid, now)); ctx.notify(`Logged. ${after.merchant.name} is ${$(after.overCents)} past its budget this period.`); }
+    else ctx.notify(`Logged. ${$(after.availableCents)} left for ${after.merchant.name}.`);
+    close();
+  };
+  if (!envs.length) return <Sheet title="Log spending" onClose={close}><p className="muted">Create an envelope first.</p></Sheet>;
+  return (
+    <Sheet title="Log spending" onClose={close} footer={<button className="btn primary block" disabled={!cents} onClick={save}>Log {cents ? $(cents) : 'purchase'}</button>}>
+      <div className="field"><span>Envelope</span>
+        <div className="pills">{envs.map(e => <button key={e.id} type="button" className="pill" aria-pressed={eid === e.id} onClick={() => setEid(e.id)}>{E.findMerchant(state, e.merchantId).name}</button>)}</div>
+        {sum && <small>{$(sum.availableCents)} available{when > 0 ? ' now; an older date counts toward the period it falls in' : ''}</small>}
+      </div>
+      <MoneyInput id="ls-amt" label="Amount" value={amount} onChange={setAmount} />
+      <div className="field"><span>When</span><Seg label="When" value={when} onChange={setWhen} options={[{ value: 0, label: 'Today' }, { value: 1, label: 'Yesterday' }, { value: 2, label: '2 days ago' }]} /></div>
+      <TextField id="ls-note" label="Note (optional)" value={note} onChange={setNote} placeholder="e.g. Groceries" />
+      <p className="tiny">Manual entries count right away. Bank syncing is planned for later. Bank data usually arrives minutes to days after a purchase, so it can update your picture but can’t stop a payment.</p>
+    </Sheet>
+  );
+}
+
+function WishlistSheet({ ctx }) {
+  const { state, now, act, close } = ctx;
+  const [label, setLabel] = useState('');
+  const [price, setPrice] = useState('');
+  const [mid, setMid] = useState('');
+  const [buying, setBuying] = useState(null);
+  const [logIt, setLogIt] = useState(true);
+  const waiting = state.wishlist.filter(w => w.status === 'waiting').sort((a, b) => a.revisitAt - b.revisitAt);
+  const past = state.wishlist.filter(w => w.status !== 'waiting').slice(-6).reverse();
+  const envFor = id => E.activeEnvelopes(state, now).find(e => e.merchantId === id);
+  const add = () => {
+    const env = envFor(mid);
+    const r = act(s => E.addWish(s, { label, merchantId: mid || null, envelopeId: env ? env.id : null, amountCents: price ? E.toCents(price) : null }, now));
+    if (r) { setLabel(''); setPrice(''); ctx.notify(`Added. Revisit it ${fmtDay(r.revisitAt)}.`); }
+  };
+  return (
+    <Sheet title="Wishlist" onClose={close}>
+      <p className="muted small">Things you want, given a week to settle. When the wait ends, buy it, keep waiting, or let it go. All three are fine.</p>
+      {waiting.length === 0 && <p className="muted">Nothing waiting.</p>}
+      {waiting.map(w => {
+        const ready = w.revisitAt <= now;
+        return (
+          <div className="card flat" key={w.id}>
+            <div className="row between"><div className="grow"><b>{w.label}</b><div className="tiny">{w.merchantId ? E.findMerchant(state, w.merchantId).name + ' · ' : ''}added {relDay(w.addedAt, now)}</div></div>{w.amountCents !== null && <span className="amt tnum">{$(w.amountCents)}</span>}</div>
+            <span className={'chip ' + (ready ? 'teal' : '')} style={{ alignSelf: 'flex-start' }}>{ready ? 'Ready to revisit' : `Waiting until ${fmtDay(w.revisitAt)}`}</span>
+            {buying === w.id ? (
+              <div className="stack">
+                {w.envelopeId && w.amountCents ? <Toggle checked={logIt} onChange={setLogIt} label={`Log ${$(w.amountCents)} as spending`} sub="Counts toward its envelope today." /> : <p className="tiny">No envelope or price attached, so nothing is logged.</p>}
+                <div className="row"><button className="btn sm primary" onClick={() => { if (act(s => E.resolveWish(s, w.id, 'bought', now, { logSpend: logIt }), 'Marked as bought.')) setBuying(null); }}>Confirm</button><button className="btn sm secondary" onClick={() => setBuying(null)}>Back</button></div>
+              </div>
+            ) : (
+              <div className="row wrap">
+                <button className="btn sm secondary" onClick={() => setBuying(w.id)}>{ready ? 'Buy it' : 'Buy anyway'}</button>
+                <button className="btn sm secondary" onClick={() => act(s => E.resolveWish(s, w.id, 'removed', now), ready ? 'Let go. You waited it out.' : 'Removed.')}>Let it go</button>
+                {ready && <button className="btn sm ghost" onClick={() => act(s => E.resolveWish(s, w.id, 'waiting', now), 'Waiting another week.')}>Wait a week more</button>}
+              </div>
+            )}
+          </div>
+        );
+      })}
+      <div className="card soft">
+        <p className="h3">Add something you’re considering</p>
+        <TextField id="wl-label" label="Item" value={label} onChange={setLabel} placeholder="e.g. Rain jacket" />
+        <MoneyInput id="wl-price" label="Price (optional)" value={price} onChange={setPrice} />
+        <div className="field"><span>Shop (optional)</span><select id="wl-m" className="input" value={mid} onChange={e => setMid(e.target.value)}><option value="">Not sure yet</option>{state.merchants.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></div>
+        <button className="btn primary" disabled={!label.trim()} onClick={add}>Add with a 7-day wait</button>
+      </div>
+      {past.length > 0 && (
+        <div className="stack"><p className="eyebrow">Decided</p>
+          <div className="list">{past.map(w => <div className="li" key={w.id}><div className="grow">{w.label}<div className="sub">{w.status === 'bought' ? 'Bought' : 'Let go'} {relDay(w.resolvedAt, now)}{w.afterCoolingOff ? ' · after the wait' : ''}</div></div>{w.amountCents !== null && <span className="amt muted">{$(w.amountCents)}</span>}</div>)}</div>
+        </div>
+      )}
+    </Sheet>
+  );
+}
+
+function ReflectSheet({ ctx }) {
+  const { now, act, close } = ctx;
+  const [prompt, setPrompt] = useState(REFLECT_PROMPTS[0]);
+  const [text, setText] = useState('');
+  return (
+    <Sheet title="Reflect" onClose={close} footer={<button className="btn primary block" disabled={!text.trim()} onClick={() => { if (act(s => E.addReflection(s, { text, prompt }, now), 'Saved. Thank you for taking a minute.')) close(); }}>Save reflection</button>}>
+      <p className="muted small">Optional and private. A sentence is plenty.</p>
+      <div className="pills">{REFLECT_PROMPTS.map(p => <button key={p} type="button" className="pill" style={{ fontSize: 13 }} aria-pressed={prompt === p} onClick={() => setPrompt(p)}>{p}</button>)}</div>
+      <p style={{ fontFamily: 'var(--display)', fontSize: 20 }}>{prompt}</p>
+      <textarea id="rf-text" className="input" value={text} onChange={e => setText(e.target.value)} maxLength={400} placeholder="Write freely." />
+    </Sheet>
+  );
+}
+
+function GoalSheet({ ctx }) {
+  const { state, now, act, close } = ctx;
+  const g = state.goal;
+  const [name, setName] = useState(g ? g.name : '');
+  const [target, setTarget] = useState(g ? centsToInput(g.targetCents) : '');
+  const [months, setMonths] = useState(g && g.byDate ? Math.max(1, Math.round((g.byDate - now) / (30 * E.DAY))) : 6);
+  const cents = E.toCents(target);
+  const save = () => {
+    const d = new Date(now); const by = new Date(d.getFullYear(), d.getMonth() + months, 1).getTime();
+    if (act(s => E.setGoal(s, { name, targetCents: cents, byDate: by, keepReported: true }, now), 'Goal saved.')) close();
+  };
+  return (
+    <Sheet title={g ? 'Edit goal' : 'Set a goal'} onClose={close} footer={<button className="btn primary block" disabled={!name.trim() || !cents} onClick={save}>Save goal</button>}>
+      <TextField id="g-name" label="Saving toward" value={name} onChange={setName} placeholder="e.g. Lisbon in spring" maxLength={40} />
+      <MoneyInput id="g-target" label="Target" value={target} onChange={setTarget} />
+      <div className="field"><span>Aim to reach it in</span><Seg label="Timeframe" value={months} onChange={setMonths} options={[3, 6, 9, 12].map(n => ({ value: n, label: `${n} mo` }))} /></div>
+      <p className="tiny">Transfers you’ve already recorded stay with the goal.</p>
+    </Sheet>
+  );
+}
+
+function SavingsSheet({ ctx }) {
+  const { now, act, close } = ctx;
+  const [amount, setAmount] = useState('');
+  const cents = E.toCents(amount);
+  return (
+    <Sheet title="Record a transfer" onClose={close} footer={<button className="btn primary block" disabled={!cents} onClick={() => { if (act(s => E.reportSavings(s, cents, now), 'Recorded as self-reported savings.')) close(); }}>Record {cents ? $(cents) : ''}</button>}>
+      <p className="muted">Record money you moved into savings yourself. Arca can’t see your bank in this prototype, so it’s marked as self-reported.</p>
+      <MoneyInput id="sv-amt" label="Amount moved" value={amount} onChange={setAmount} />
+      <p className="tiny">A future bank connection could show verified deposits separately. Skipped purchases aren’t added here automatically, because not spending money doesn’t put it in savings.</p>
+    </Sheet>
+  );
+}
+
+/* ================= PROGRESS ================= */
+function Progress({ ctx }) {
+  const { state, now, act } = ctx;
+  const p = E.progress(state, now);
+  const ms = E.milestones(state, now);
+  const sums = E.activeEnvelopes(state, now).map(e => E.envelopeSummary(state, e.id, now));
+  const maxB = Math.max(1, ...sums.map(x => Math.max(x.budgetCents, x.completedCents + x.pendingCents)));
+  const forgone = state.forgone.slice().reverse();
+  const recent = state.attempts.filter(a => a.at <= now).slice(-8).reverse();
+  return (
+    <div className="pad screen-in">
+      <div className="stack" style={{ paddingTop: 8 }}>
+        <p className="eyebrow">Progress</p>
+        <h1 className="display">What you’ve kept to</h1>
+        <p className="muted">Each number below measures something different, so they’re kept apart rather than added into one savings figure.</p>
+      </div>
+
+      <div className="card">
+        <div className="row between"><p className="h3">Days within budget</p><span className="chip teal">{p.days.streak}-day streak</span></div>
+        <div className="row" style={{ alignItems: 'baseline', gap: 8 }}><span className="big-num">{p.days.within}</span><span className="muted">of {p.days.total} days</span></div>
+        <p className="tiny">A day counts when every envelope’s completed spending is at or under its budget at the end of the day.</p>
+      </div>
+
+      <div className="card">
+        <p className="h3">Completed spending this period</p>
+        <div className="row" style={{ alignItems: 'baseline', gap: 8 }}><span className="big-num">{$(p.completed.periodCents)}</span><span className="muted small">+ {$(p.completed.pendingCents)} pending</span></div>
+        <div className="stack">
+          {sums.map(x => (
+            <div key={x.id} className="stack" style={{ gap: 4 }}>
+              <div className="row between small"><span>{x.merchant.name}</span><span className="tnum muted">{$(x.completedCents)} / {$(x.budgetCents, true)}</span></div>
+              <div style={{ width: (Math.max(x.budgetCents, x.completedCents + x.pendingCents) / maxB * 100) + '%' }}><Bar budget={x.budgetCents} completed={x.completedCents} pending={x.pendingCents} /></div>
+            </div>
+          ))}
+        </div>
+        <p className="tiny">All time: {$(p.completed.allTimeCents)} after refunds.</p>
+      </div>
+
+      <div className="card">
+        <p className="h3">Shopping interventions</p>
+        <span className="big-num">{p.interventions.total}</span>
+        <div className="stats">
+          <div className="stat"><b>{p.interventions.shields}</b><span>Shield screens ({p.interventions.shieldsWaited} waited)</span></div>
+          <div className="stat"><b>{p.interventions.declines}</b><span>Checkout declines</span></div>
+          <div className="stat"><b>{p.interventions.nudges}</b><span>Over-budget reminders</span></div>
+        </div>
+        <p className="tiny">A shield screen has no amount, because opening an app doesn’t say what you would have spent.</p>
+      </div>
+
+      <div className="card">
+        <p className="h3">Declined purchase attempts</p>
+        <span className="big-num">{$(p.declined.valueCents)}</span>
+        <p className="small muted">{p.declined.uniqueCount} unique purchase{p.declined.uniqueCount === 1 ? '' : 's'} from {p.declined.attemptCount} attempt{p.declined.attemptCount === 1 ? '' : 's'}. Retries of the same purchase within a day count once, and purchases approved after a budget change drop out.</p>
+        <p className="tiny">A declined payment isn’t proof of savings. The same thing could be bought another way, or later.</p>
+      </div>
+
+      <div className="card">
+        <p className="h3">Purchases you chose to skip</p>
+        <div className="row" style={{ alignItems: 'baseline', gap: 8 }}><span className="big-num">{$(p.forgone.valueCents)}</span><span className="muted small">you reported{p.forgone.unknownAmountCount ? ` · ${p.forgone.unknownAmountCount} without a price` : ''}</span></div>
+        <div className="list">
+          {forgone.map(f => (
+            <div className="li" key={f.id}>
+              <div className="grow"><div className={f.status === 'bought_later' ? 'strike' : ''}>{f.label}</div><div className="sub">{relDay(f.at, now)} · {f.source === 'shield' ? 'after a shield' : f.source === 'decline' ? 'after a decline' : 'noted by you'}{f.status === 'bought_later' ? ' · bought later' : ''}</div></div>
+              <span className="amt">{f.amountCents !== null ? $(f.amountCents) : '—'}</span>
+              <button className="btn sm secondary" onClick={() => act(s => E.setForgoneStatus(s, f.id, f.status === 'forgone' ? 'bought_later' : 'forgone', now), f.status === 'forgone' ? 'Marked as bought later. It no longer counts as skipped.' : 'Marked as skipped again.')}>{f.status === 'forgone' ? 'Bought later' : 'Undo'}</button>
+            </div>
+          ))}
+          {forgone.length === 0 && <p className="muted small">Nothing yet.</p>}
+        </div>
+      </div>
+
+      <div className="card flat">
+        <div className="row between"><p className="h3">Verified savings deposits</p><span className="chip">Not connected</span></div>
+        <p className="small muted">This would come from a future bank connection that can confirm money arrived in savings. Until then, only your self-reported transfers ({p.goal ? $(p.goal.reportedCents) : '$0'}) appear on Home.</p>
+      </div>
+
+      <div className="card">
+        <p className="h3">Milestones</p>
+        <div>{ms.map(m => (
+          <div key={m.id} className={'mile ' + (m.done ? 'done' : '')}>
+            <span className="m">{m.done ? <span style={{ width: 16 }}><Icon name="check" /></span> : <span style={{ width: 8, height: 8, borderRadius: 8, background: 'var(--line)' }} />}</span>
+            <div className="grow"><b>{m.title}</b><div className="small muted">{m.detail}</div>{!m.done && m.progress && <div className="tiny">{m.progress}</div>}</div>
+          </div>))}</div>
+      </div>
+
+      {state.reflections.length > 0 && (
+        <div className="card">
+          <p className="h3">Your reflections</p>
+          {state.reflections.slice().reverse().slice(0, 4).map(r => (
+            <div key={r.id} className="stack" style={{ gap: 2 }}><span className="tiny">{relDay(r.at, now)} · {r.prompt}</span><p style={{ fontFamily: 'var(--display)', fontSize: 17 }}>“{r.text}”</p></div>
+          ))}
+        </div>
+      )}
+
+      <details className="fold card flat">
+        <summary>Recent card activity (demo)</summary>
+        <div className="list" style={{ marginTop: 8 }}>{recent.map(a => (
+          <div className="li" key={a.id}><div className="grow">{a.note || 'Purchase'} · {E.findMerchant(state, a.merchantId).name}<div className="sub">{relDay(a.at, now)} {fmtTime(a.at)}{a.isRetry ? ' · retry' : ''}</div></div>
+            <span className={'chip ' + (a.decision === 'approved' ? 'teal' : 'stop')}>{a.decision === 'approved' ? 'Approved' : 'Declined'}</span><span className="amt">{$(a.amountCents)}</span></div>))}</div>
+      </details>
+    </div>
+  );
+}
+
+/* ================= SETTINGS ================= */
+function Settings({ ctx }) {
+  const { state, now, act, open, notify } = ctx;
+  const [tests, setTests] = useState(null);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [name, setName] = useState(state.profile.name || '');
+  const offset = state.clockOffsetMs || 0;
+  const shift = ms => act(s => ({ state: { ...s, clockOffsetMs: (s.clockOffsetMs || 0) + ms } }), ms ? 'Demo clock moved forward.' : null);
+  const pass = tests ? tests.filter(t => t.pass).length : 0;
+  return (
+    <div className="pad screen-in">
+      <div className="stack" style={{ paddingTop: 8 }}><p className="eyebrow">Settings</p><h1 className="display">Your setup</h1></div>
+
+      <div className="card">
+        <div className="field"><span><label htmlFor="st-name">Name used in greetings</label></span>
+          <div className="row"><input id="st-name" className="input grow" value={name} maxLength={30} onChange={e => setName(e.target.value)} /><button className="btn sm secondary" onClick={() => act(s => ({ state: { ...s, profile: { ...s.profile, name: name.trim() } } }), 'Saved.')}>Save</button></div>
+        </div>
+        <button className="btn secondary" onClick={() => open('goal')}>Edit savings goal</button>
+      </div>
+
+      <div className="card">
+        <div className="row between"><p className="h3">Demo clock</p>{offset > 0 && <span className="chip warn">Ahead of real time</span>}</div>
+        <p className="small muted">Now in the demo: <b>{fmtWhen(now)}</b>. Move time forward to watch cooling-off periods end, holds age and budgets reset.</p>
+        <div className="row wrap">
+          <button className="btn sm secondary" onClick={() => shift(E.HOUR * 12)}>+12 hours</button>
+          <button className="btn sm secondary" onClick={() => shift(E.DAY)}>+1 day</button>
+          <button className="btn sm secondary" onClick={() => shift(E.DAY * 3)}>+3 days</button>
+          <button className="btn sm secondary" onClick={() => shift(E.DAY * 7)}>+1 week</button>
+          {offset > 0 && <button className="btn sm ghost" onClick={() => act(s => ({ state: { ...s, clockOffsetMs: 0 } }), 'Back to real time. Changes made in the future stay in the ledger with their future dates.')}>Back to real time</button>}
+        </div>
+      </div>
+
+      <div className="card">
+        <p className="h3">Connections</p>
+        <div className="list">
+          <div className="li"><div className="grow">Screen Time access<div className="sub">Simulated. The iPhone app asks for permission and lets you pick apps and sites.</div></div><span className="chip">Simulated</span></div>
+          <div className="li"><div className="grow">Bank transactions<div className="sub">Planned for later, through a data provider. Not available in this prototype.</div></div><span className="chip">Unavailable</span></div>
+          <div className="li"><div className="grow">Envelope cards<div className="sub">Phase 2, pending a card program partner and bank approval.</div></div><span className="chip demo">Demo only</span></div>
+          <div className="li"><div className="grow">Notifications<div className="sub">Browsers can’t show iPhone notifications here. Gentle reminders appear inside the app instead.</div></div><span className="chip">Unavailable</span></div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="row between"><p className="h3">Engine checks</p>{tests && <span className={'chip ' + (pass === tests.length ? 'teal' : 'stop')}>{pass}/{tests.length} passing</span>}</div>
+        <p className="small muted">Runs the budget and restriction rules against fixed test cases, separate from your demo data.</p>
+        <button className="btn secondary" onClick={() => setTests(E.runSelfTests())}>{tests ? 'Run again' : 'Run checks'}</button>
+        {tests && <div>{tests.map(t => (
+          <div className="test-row" key={t.name}><span className="dotok" style={{ background: t.pass ? 'var(--ok)' : 'var(--stop)' }}>{t.pass ? '✓' : '!'}</span><div className="grow">{t.name}{t.error && <div className="tiny" style={{ color: 'var(--stop)' }}>{t.error}</div>}</div></div>
+        ))}</div>}
+      </div>
+
+      <div className="card">
+        <p className="h3">Demo data</p>
+        <p className="small muted">Your changes are saved in this browser only.</p>
+        <button className="btn secondary" onClick={() => act(s => ({ state: { ...s, onboarded: false } }))}>Replay onboarding</button>
+        {!confirmReset ? <button className="btn danger" onClick={() => setConfirmReset(true)}>Reset demo data</button> : (
+          <div className="card warnc"><p className="small">This replaces everything with fresh sample data and restarts onboarding.</p>
+            <div className="row"><button className="btn sm primary" onClick={() => { ctx.setState(E.seedDemoState(Date.now())); setConfirmReset(false); notify('Demo data reset.'); }}>Reset</button><button className="btn sm secondary" onClick={() => setConfirmReset(false)}>Cancel</button></div></div>
+        )}
+      </div>
+
+      <details className="fold card flat">
+        <summary>What’s simulated in this prototype</summary>
+        <div className="stack small muted" style={{ marginTop: 10 }}>
+          <p><b>Simulated:</b> card authorizations, holds, captures, releases and refunds; Screen Time shields; savings deposits; notifications. All merchants, people and amounts are fictional.</p>
+          <p><b>Working for real, inside this page:</b> the budget engine, envelope rules, cooling-off timing, duplicate-attempt handling and progress math, all in whole cents.</p>
+          <p><b>Not attempted:</b> reading other apps or checkout pages, bank logins, moving money, issuing cards.</p>
+          <p>People can still pay with another card, device or shop. Arca helps you keep a decision you made. It can’t make spending elsewhere impossible.</p>
+        </div>
+      </details>
+    </div>
+  );
+}
+
+/* ================= ONBOARDING ================= */
+const FOCUS = ['Online shopping', 'Food delivery', 'Clothing', 'Home decor', 'Gadgets', 'Beauty', 'Late-night browsing', 'Subscriptions'];
+function Onboarding({ ctx }) {
+  const { state, now, act } = ctx;
+  const [step, setStep] = useState(0);
+  const [name, setName] = useState('');
+  const [focus, setFocus] = useState([]);
+  const [goalName, setGoalName] = useState('');
+  const [goalTarget, setGoalTarget] = useState('');
+  const [months, setMonths] = useState(6);
+  const [picked, setPicked] = useState([]);
+  const [customName, setCustomName] = useState('');
+  const [mode, setMode] = useState('payment');
+  const [first, setFirst] = useState('');
+  const [cadence, setCadence] = useState('monthly');
+  const [budget, setBudget] = useState('100');
+  const [commitment, setCommitment] = useState(true);
+  const [cooling, setCooling] = useState(48);
+  const merchants = state.merchants.filter(m => !m.custom || m.id === 'hearth');
+  const options = [...merchants.map(m => ({ id: m.id, name: m.name })), ...(customName.trim() ? [{ id: '__custom', name: customName.trim() }] : [])];
+  const pickedOpts = options.filter(o => picked.includes(o.id));
+  const firstId = picked.includes(first) ? first : (picked[0] || '');
+  const toggle = (arr, set, v) => set(arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]);
+  const steps = 6;
+  const valid = [true, focus.length > 0, goalName.trim() && E.toCents(goalTarget) > 0, picked.length > 0, true, E.toCents(budget) > 0][step];
+  const finish = () => {
+    const d = new Date(now);
+    const r = act(s => E.completeOnboarding(s, {
+      name, focus,
+      goal: { name: goalName.trim(), targetCents: E.toCents(goalTarget), byDate: new Date(d.getFullYear(), d.getMonth() + months, 1).getTime() },
+      envelope: { merchantId: firstId === '__custom' ? null : firstId, customName: firstId === '__custom' ? customName.trim() : null, cadence, budgetCents: E.toCents(budget), mode, commitment, coolingHours: cooling }
+    }, now));
+    if (r) { ctx.setTab('home'); ctx.notify('Your first envelope is ready.'); }
+  };
+  const skip = () => act(s => ({ state: { ...s, onboarded: true } }), 'Exploring with sample data. Replay onboarding from Settings.');
+  const firstName = (options.find(o => o.id === firstId) || {}).name || 'this shop';
+  return (
+    <div className="onb">
+      <div className="onb-top">
+        <div className="dots" aria-label={`Step ${step + 1} of ${steps}`}>{Array.from({ length: steps }).map((_, i) => <i key={i} className={i <= step ? 'on' : ''} />)}</div>
+        <button className="link" onClick={skip}>Skip</button>
+      </div>
+      <div className="onb-body" key={step}>
+        {step === 0 && (<>
+          <div className="onb-hero"><div className="hero-glow" /><Hills /></div>
+          <p className="eyebrow">Arca · Latin for a chest, a place for safekeeping</p>
+          <h1 className="display">Keep the spending decisions you make in advance.</h1>
+          <p className="muted">You choose a budget for the shops that pull you in. When a moment of wanting arrives, Arca gives you room to decide, and stands by the plan you made.</p>
+          <TextField id="ob-name" label="What should we call you? (optional)" value={name} onChange={setName} placeholder="First name" maxLength={30} />
+          <p className="tiny">This is a prototype with fictional sample data. No bank details are requested and no money moves.</p>
+        </>)}
+        {step === 1 && (<>
+          <h1 className="title">What would you like to spend less on?</h1>
+          <p className="muted">Pick any that fit. This shapes your suggestions, nothing else.</p>
+          <div className="pills">{FOCUS.map(f => <button key={f} type="button" className="pill" aria-pressed={focus.includes(f)} onClick={() => toggle(focus, setFocus, f)}>{f}</button>)}</div>
+        </>)}
+        {step === 2 && (<>
+          <h1 className="title">What are you saving toward?</h1>
+          <p className="muted">A clear reason makes a pause easier to keep.</p>
+          <TextField id="ob-goal" label="Goal" value={goalName} onChange={setGoalName} placeholder="e.g. Lisbon in spring" maxLength={40} />
+          <MoneyInput id="ob-target" label="Target amount" value={goalTarget} onChange={setGoalTarget} />
+          <div className="field"><span>Aim to reach it in</span><Seg label="Timeframe" value={months} onChange={setMonths} options={[3, 6, 9, 12].map(n => ({ value: n, label: `${n} mo` }))} /></div>
+          <p className="tiny">This is a target. Arca counts money toward it only when you record moving it to savings.</p>
+        </>)}
+        {step === 3 && (<>
+          <h1 className="title">Which shops pull you in?</h1>
+          <p className="muted">You’ll start with one envelope and can add the rest any time.</p>
+          <div className="pills">{options.map(o => <button key={o.id} type="button" className="pill" aria-pressed={picked.includes(o.id)} onClick={() => toggle(picked, setPicked, o.id)}>{o.name}</button>)}</div>
+          <TextField id="ob-custom" label="Another shop" value={customName} onChange={v => { setCustomName(v); if (v.trim() && !picked.includes('__custom')) setPicked([...picked, '__custom']); if (!v.trim()) setPicked(picked.filter(x => x !== '__custom')); }} placeholder="Type a name to add it" maxLength={40} />
+        </>)}
+        {step === 4 && (<>
+          <h1 className="title">Three ways Arca can step in</h1>
+          <p className="muted">They get firmer as you go down. Choose one for your first envelope.</p>
+          {['reminder', 'access', 'payment'].map((k, i) => (
+            <button key={k} type="button" className="choice" aria-pressed={mode === k} onClick={() => setMode(k)}>
+              <span className="eyebrow" style={{ color: 'var(--teal-ink)' }}>{['Notice', 'Friction', 'Enforcement'][i]}</span>
+              <b>{MODE[k].label}</b><span>{MODE[k].desc}</span>
+            </button>
+          ))}
+          <p className="tiny">None of these can stop you paying with another card, device or shop. They make your own plan easier to keep.</p>
+        </>)}
+        {step === 5 && (<>
+          <h1 className="title">Your first envelope</h1>
+          {pickedOpts.length > 1 && <div className="pills">{pickedOpts.map(o => <button key={o.id} type="button" className="pill" aria-pressed={firstId === o.id} onClick={() => setFirst(o.id)}>{o.name}</button>)}</div>}
+          <div className="field"><span>Resets</span><Seg label="Cadence" value={cadence} onChange={setCadence} options={[{ value: 'weekly', label: 'Weekly' }, { value: 'monthly', label: 'Monthly' }]} /></div>
+          <MoneyInput id="ob-budget" label={`${firstName} budget per ${cadence === 'weekly' ? 'week' : 'month'}`} value={budget} onChange={setBudget} />
+          <div className="card flat">
+            <Toggle checked={commitment} onChange={setCommitment} label="Commitment mode" sub="Loosening this envelope later will wait out a cooling-off period." />
+            {commitment && <Seg label="Cooling-off" value={cooling} onChange={setCooling} options={[24, 48, 72].map(h => ({ value: h, label: `${h}h` }))} />}
+          </div>
+          <div className="card soft"><p className="small">{firstName}: {E.toCents(budget) ? $(E.toCents(budget)) : '—'} per {cadence === 'weekly' ? 'week' : 'month'}, {MODE[mode].label.toLowerCase()}{commitment ? `, with a ${cooling}-hour cooling-off before raising it` : ''}. Lowering it always applies right away.</p></div>
+        </>)}
+      </div>
+      <div className="onb-foot">
+        {step > 0 && <button className="btn secondary" onClick={() => setStep(step - 1)}>Back</button>}
+        {step < steps - 1
+          ? <button className="btn primary grow" disabled={!valid} onClick={() => setStep(step + 1)}>{step === 0 ? 'Begin' : 'Continue'}</button>
+          : <button className="btn primary grow" disabled={!valid} onClick={finish}>Create envelope</button>}
+      </div>
+    </div>
+  );
+}
+
+/* ================= APP SHELL ================= */
+const SHEETS = { envelope: EnvelopeSheet, editor: EditorSheet, card: CardSheet, purchase: PurchaseSheet, leave: LeaveSheet, override: OverrideSheet, capture: CaptureSheet, refund: RefundSheet, shield: ShieldSheet, spend: SpendSheet, wishlist: WishlistSheet, reflect: ReflectSheet, goal: GoalSheet, savings: SavingsSheet };
+const TABS = [{ id: 'home', label: 'Home', icon: 'home' }, { id: 'envelopes', label: 'Envelopes', icon: 'env' }, { id: 'progress', label: 'Progress', icon: 'progress' }, { id: 'settings', label: 'Settings', icon: 'gear' }];
+
+function App() {
+  const [state, setStateRaw] = useState(() => loadState() || E.seedDemoState(Date.now()));
+  const stateRef = useRef(state);
+  const setState = s => { stateRef.current = s; setStateRaw(s); };
+  const [realNow, setRealNow] = useState(Date.now());
+  useEffect(() => { const i = setInterval(() => setRealNow(Date.now()), 20000); return () => clearInterval(i); }, []);
+  useEffect(() => { saveState(state); }, [state]);
+  const now = realNow + (state.clockOffsetMs || 0);
+  const [tab, setTabRaw] = useState(() => { try { return localStorage.getItem(TAB_KEY) || 'home'; } catch (e) { return 'home'; } });
+  const setTab = t => { setTabRaw(t); try { localStorage.setItem(TAB_KEY, t); } catch (e) {} };
+  const [stack, setStack] = useState([]);
+  const [toast, setToast] = useState(null);
+  const screenRef = useRef(null);
+  useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(null), 3600); return () => clearTimeout(t); }, [toast]);
+  useEffect(() => { if (screenRef.current) screenRef.current.scrollTop = 0; }, [tab]);
+
+  const notify = msg => setToast({ msg, key: Math.random() });
+  const act = (fn, msg) => {
+    try {
+      const out = fn(stateRef.current);
+      setState(out.state);
+      if (msg) notify(typeof msg === 'function' ? msg(out.result || {}) : msg);
+      return out.result || {};
+    } catch (e) { notify(e.message); return null; }
+  };
+  const open = (type, props) => setStack(st => [...st, { type, props: props || {}, key: Math.random() }]);
+  const close = useCallback(() => setStack(st => st.slice(0, -1)), []);
+  const replace = (type, props) => setStack(st => [...st.slice(0, -1), { type, props: props || {}, key: Math.random() }]);
+  const ctx = { state, stateRef, now, act, open, close, replace, notify, setState, setTab };
+  const top = stack[stack.length - 1];
+  const SheetC = top ? SHEETS[top.type] : null;
+
+  if (!state.onboarded) {
+    return <div className="device"><div className="statusbar" /><Onboarding ctx={ctx} />{toast && <div className="toast" key={toast.key} role="status">{toast.msg}</div>}</div>;
+  }
+  return (
+    <div className="device">
+      <div className="statusbar" />
+      <main className="screen" ref={screenRef}>
+        {tab === 'home' && <Home ctx={ctx} />}
+        {tab === 'envelopes' && <Envelopes ctx={ctx} />}
+        {tab === 'progress' && <Progress ctx={ctx} />}
+        {tab === 'settings' && <Settings ctx={ctx} />}
+      </main>
+      <nav className="tabbar" aria-label="Main">
+        {TABS.map(t => <button key={t.id} className="tab" aria-current={tab === t.id ? 'page' : undefined} onClick={() => { setTab(t.id); setStack([]); }}><Icon name={t.icon} />{t.label}<span className="tab-dot" /></button>)}
+      </nav>
+      {SheetC && <SheetC key={top.key} ctx={ctx} {...top.props} />}
+      {toast && <div className="toast" key={toast.key} role="status">{toast.msg}</div>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+<script>
+  // Offline support once installed. Skipped where service workers aren't available.
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+  }
+</script>
+</body>
+</html>
